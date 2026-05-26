@@ -9,8 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RelayPointsRouteImport } from './routes/relay-points'
+import { Route as RechargeRouteImport } from './routes/recharge'
+import { Route as OrderRouteImport } from './routes/order'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BecomeRelayRouteImport } from './routes/become-relay'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 
+const RelayPointsRoute = RelayPointsRouteImport.update({
+  id: '/relay-points',
+  path: '/relay-points',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RechargeRoute = RechargeRouteImport.update({
+  id: '/recharge',
+  path: '/recharge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrderRoute = OrderRouteImport.update({
+  id: '/order',
+  path: '/order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BecomeRelayRoute = BecomeRelayRouteImport.update({
+  id: '/become-relay',
+  path: '/become-relay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +55,116 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/become-relay': typeof BecomeRelayRoute
+  '/dashboard': typeof DashboardRoute
+  '/order': typeof OrderRoute
+  '/recharge': typeof RechargeRoute
+  '/relay-points': typeof RelayPointsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/become-relay': typeof BecomeRelayRoute
+  '/dashboard': typeof DashboardRoute
+  '/order': typeof OrderRoute
+  '/recharge': typeof RechargeRoute
+  '/relay-points': typeof RelayPointsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/become-relay': typeof BecomeRelayRoute
+  '/dashboard': typeof DashboardRoute
+  '/order': typeof OrderRoute
+  '/recharge': typeof RechargeRoute
+  '/relay-points': typeof RelayPointsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/become-relay'
+    | '/dashboard'
+    | '/order'
+    | '/recharge'
+    | '/relay-points'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/become-relay'
+    | '/dashboard'
+    | '/order'
+    | '/recharge'
+    | '/relay-points'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/become-relay'
+    | '/dashboard'
+    | '/order'
+    | '/recharge'
+    | '/relay-points'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  BecomeRelayRoute: typeof BecomeRelayRoute
+  DashboardRoute: typeof DashboardRoute
+  OrderRoute: typeof OrderRoute
+  RechargeRoute: typeof RechargeRoute
+  RelayPointsRoute: typeof RelayPointsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/relay-points': {
+      id: '/relay-points'
+      path: '/relay-points'
+      fullPath: '/relay-points'
+      preLoaderRoute: typeof RelayPointsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recharge': {
+      id: '/recharge'
+      path: '/recharge'
+      fullPath: '/recharge'
+      preLoaderRoute: typeof RechargeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/order': {
+      id: '/order'
+      path: '/order'
+      fullPath: '/order'
+      preLoaderRoute: typeof OrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/become-relay': {
+      id: '/become-relay'
+      path: '/become-relay'
+      fullPath: '/become-relay'
+      preLoaderRoute: typeof BecomeRelayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,17 +177,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  BecomeRelayRoute: BecomeRelayRoute,
+  DashboardRoute: DashboardRoute,
+  OrderRoute: OrderRoute,
+  RechargeRoute: RechargeRoute,
+  RelayPointsRoute: RelayPointsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
