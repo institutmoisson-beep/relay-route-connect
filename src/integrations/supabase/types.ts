@@ -14,16 +14,381 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      msn_deliveries: {
+        Row: {
+          at_relay_at: string | null
+          circumstances: Json | null
+          created_at: string
+          delivered_at: string | null
+          delivery_price: number
+          estimated_distance_km: number | null
+          id: string
+          notes: string | null
+          order_code: string | null
+          order_image_url: string | null
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          picked_up_at: string | null
+          provider_location: string | null
+          provider_name: string
+          provider_phone: string | null
+          relay_point_id: string | null
+          status: Database["public"]["Enums"]["delivery_status"]
+          user_id: string
+        }
+        Insert: {
+          at_relay_at?: string | null
+          circumstances?: Json | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_price?: number
+          estimated_distance_km?: number | null
+          id?: string
+          notes?: string | null
+          order_code?: string | null
+          order_image_url?: string | null
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          picked_up_at?: string | null
+          provider_location?: string | null
+          provider_name: string
+          provider_phone?: string | null
+          relay_point_id?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          user_id: string
+        }
+        Update: {
+          at_relay_at?: string | null
+          circumstances?: Json | null
+          created_at?: string
+          delivered_at?: string | null
+          delivery_price?: number
+          estimated_distance_km?: number | null
+          id?: string
+          notes?: string | null
+          order_code?: string | null
+          order_image_url?: string | null
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          picked_up_at?: string | null
+          provider_location?: string | null
+          provider_name?: string
+          provider_phone?: string | null
+          relay_point_id?: string | null
+          status?: Database["public"]["Enums"]["delivery_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msn_deliveries_relay_point_id_fkey"
+            columns: ["relay_point_id"]
+            isOneToOne: false
+            referencedRelation: "msn_relay_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msn_pricing_config: {
+        Row: {
+          base_price: number
+          holiday_multiplier: number
+          id: number
+          price_per_km: number
+          rain_multiplier: number
+          strike_multiplier: number
+          updated_at: string
+          weekend_multiplier: number
+        }
+        Insert: {
+          base_price?: number
+          holiday_multiplier?: number
+          id?: number
+          price_per_km?: number
+          rain_multiplier?: number
+          strike_multiplier?: number
+          updated_at?: string
+          weekend_multiplier?: number
+        }
+        Update: {
+          base_price?: number
+          holiday_multiplier?: number
+          id?: number
+          price_per_km?: number
+          rain_multiplier?: number
+          strike_multiplier?: number
+          updated_at?: string
+          weekend_multiplier?: number
+        }
+        Relationships: []
+      }
+      msn_relay_applications: {
+        Row: {
+          address: string
+          admin_notes: string | null
+          city: string
+          country: string
+          created_at: string
+          description: string | null
+          id: string
+          neighborhood: string
+          phone: string
+          reviewed_at: string | null
+          space_name: string
+          space_type: Database["public"]["Enums"]["relay_space_type"]
+          status: Database["public"]["Enums"]["application_status"]
+          user_id: string
+        }
+        Insert: {
+          address: string
+          admin_notes?: string | null
+          city: string
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          neighborhood: string
+          phone: string
+          reviewed_at?: string | null
+          space_name: string
+          space_type: Database["public"]["Enums"]["relay_space_type"]
+          status?: Database["public"]["Enums"]["application_status"]
+          user_id: string
+        }
+        Update: {
+          address?: string
+          admin_notes?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          neighborhood?: string
+          phone?: string
+          reviewed_at?: string | null
+          space_name?: string
+          space_type?: Database["public"]["Enums"]["relay_space_type"]
+          status?: Database["public"]["Enums"]["application_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      msn_relay_points: {
+        Row: {
+          address: string | null
+          city: string
+          country: string
+          created_at: string
+          id: string
+          name: string
+          neighborhood: string
+          owner_id: string | null
+          phone: string | null
+          rating: number | null
+          space_type: Database["public"]["Enums"]["relay_space_type"]
+          status: Database["public"]["Enums"]["relay_status"]
+          total_reviews: number
+          trust_level: Database["public"]["Enums"]["trust_level"]
+        }
+        Insert: {
+          address?: string | null
+          city: string
+          country?: string
+          created_at?: string
+          id?: string
+          name: string
+          neighborhood: string
+          owner_id?: string | null
+          phone?: string | null
+          rating?: number | null
+          space_type: Database["public"]["Enums"]["relay_space_type"]
+          status?: Database["public"]["Enums"]["relay_status"]
+          total_reviews?: number
+          trust_level?: Database["public"]["Enums"]["trust_level"]
+        }
+        Update: {
+          address?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          id?: string
+          name?: string
+          neighborhood?: string
+          owner_id?: string | null
+          phone?: string | null
+          rating?: number | null
+          space_type?: Database["public"]["Enums"]["relay_space_type"]
+          status?: Database["public"]["Enums"]["relay_status"]
+          total_reviews?: number
+          trust_level?: Database["public"]["Enums"]["trust_level"]
+        }
+        Relationships: []
+      }
+      msn_relay_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          delivery_id: string | null
+          id: string
+          rating: number
+          relay_point_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          delivery_id?: string | null
+          id?: string
+          rating: number
+          relay_point_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          delivery_id?: string | null
+          id?: string
+          rating?: number
+          relay_point_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msn_relay_reviews_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "msn_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "msn_relay_reviews_relay_point_id_fkey"
+            columns: ["relay_point_id"]
+            isOneToOne: false
+            referencedRelation: "msn_relay_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msn_wallet_recharge_requests: {
+        Row: {
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          operator: Database["public"]["Enums"]["mobile_operator"]
+          reviewed_at: string | null
+          sender_phone: string
+          status: Database["public"]["Enums"]["recharge_status"]
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          operator: Database["public"]["Enums"]["mobile_operator"]
+          reviewed_at?: string | null
+          sender_phone: string
+          status?: Database["public"]["Enums"]["recharge_status"]
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          operator?: Database["public"]["Enums"]["mobile_operator"]
+          reviewed_at?: string | null
+          sender_phone?: string
+          status?: Database["public"]["Enums"]["recharge_status"]
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          is_blocked: boolean
+          phone: string | null
+          updated_at: string
+          wallet_balance: number
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          is_blocked?: boolean
+          phone?: string | null
+          updated_at?: string
+          wallet_balance?: number
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          is_blocked?: boolean
+          phone?: string | null
+          updated_at?: string
+          wallet_balance?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "relay_owner" | "user"
+      application_status: "pending" | "approved" | "rejected"
+      delivery_status:
+        | "pending"
+        | "picked_up"
+        | "at_relay"
+        | "delivered"
+        | "cancelled"
+      mobile_operator: "orange" | "moov" | "mtn" | "wave"
+      payment_mode: "msn_delivery" | "direct_provider"
+      recharge_status: "pending" | "approved" | "rejected"
+      relay_space_type:
+        | "shop"
+        | "restaurant"
+        | "maquis"
+        | "establishment"
+        | "individual"
+        | "other"
+      relay_status: "active" | "pending" | "suspended"
+      trust_level: "standard" | "verified" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +515,29 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "relay_owner", "user"],
+      application_status: ["pending", "approved", "rejected"],
+      delivery_status: [
+        "pending",
+        "picked_up",
+        "at_relay",
+        "delivered",
+        "cancelled",
+      ],
+      mobile_operator: ["orange", "moov", "mtn", "wave"],
+      payment_mode: ["msn_delivery", "direct_provider"],
+      recharge_status: ["pending", "approved", "rejected"],
+      relay_space_type: [
+        "shop",
+        "restaurant",
+        "maquis",
+        "establishment",
+        "individual",
+        "other",
+      ],
+      relay_status: ["active", "pending", "suspended"],
+      trust_level: ["standard", "verified", "premium"],
+    },
   },
 } as const
