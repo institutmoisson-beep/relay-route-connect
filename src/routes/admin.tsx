@@ -160,8 +160,8 @@ function ApplicationsPanel({ qc }: any) {
             <div className="text-xs text-muted-foreground mt-1">{a.address}</div>
             {a.description && <p className="text-sm mt-2 italic">"{a.description}"</p>}
             <div className="flex gap-2 mt-2">
-              {a.id_photo_url && <Button size="sm" variant="outline" onClick={() => viewFile(a.id_photo_url)}><Eye className="size-3 mr-1" />Pièce ID</Button>}
-              {a.space_photo_url && <Button size="sm" variant="outline" onClick={() => viewFile(a.space_photo_url)}><Eye className="size-3 mr-1" />Espace</Button>}
+              {a.id_photo_url && <Button size="sm" variant="outline" onClick={() => viewFile(a.id_photo_url!)}><Eye className="size-3 mr-1" />Pièce ID</Button>}
+              {a.space_photo_url && <Button size="sm" variant="outline" onClick={() => viewFile(a.space_photo_url!)}><Eye className="size-3 mr-1" />Espace</Button>}
             </div>
           </div>
           <Badge className={a.status==="pending"?"bg-warning/20 border-warning/40 text-warning-foreground border":a.status==="approved"?"bg-success/20 border-success/40 border":"bg-destructive/20 border-destructive/40 border"}>{a.status}</Badge>
