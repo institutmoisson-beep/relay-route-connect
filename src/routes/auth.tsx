@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { z } from "zod";
 import { Package } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { MathCaptcha } from "@/components/math-captcha";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
@@ -29,6 +30,8 @@ function AuthPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [captchaOk, setCaptchaOk] = useState(false);
+  const onCaptchaChange = useCallback((ok: boolean) => setCaptchaOk(ok), []);
 
   useEffect(() => {
     if (user) navigate({ to: "/dashboard", replace: true });
@@ -36,6 +39,7 @@ function AuthPage() {
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!captchaOk) { toast.error("Résolvez le défi anti-robot"); return; }
     const form = new FormData(e.currentTarget);
     const parsed = loginSchema.safeParse({ email: form.get("email"), password: form.get("password") });
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
@@ -48,6 +52,7 @@ function AuthPage() {
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!captchaOk) { toast.error("Résolvez le défi anti-robot"); return; }
     const form = new FormData(e.currentTarget);
     const parsed = signupSchema.safeParse({
       full_name: form.get("full_name"),
@@ -67,7 +72,7 @@ function AuthPage() {
     });
     setLoading(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Compte créé ! Vérifiez votre email.");
+    toast.success("Compte créé !");
   };
 
   return (
@@ -105,6 +110,7 @@ function AuthPage() {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required /></div>
                 <div><Label htmlFor="password">Mot de passe</Label><Input id="password" name="password" type="password" required /></div>
+                <MathCaptcha onValidChange={onCaptchaChange} />
                 <Button disabled={loading} className="w-full bg-gradient-primary h-11">{loading ? "..." : "Se connecter"}</Button>
               </form>
             </TabsContent>
@@ -115,6 +121,7 @@ function AuthPage() {
                 <div><Label htmlFor="su_phone">Téléphone</Label><Input id="su_phone" name="phone" type="tel" placeholder="+225 ..." required /></div>
                 <div><Label htmlFor="su_email">Email</Label><Input id="su_email" name="email" type="email" required /></div>
                 <div><Label htmlFor="su_pwd">Mot de passe</Label><Input id="su_pwd" name="password" type="password" required minLength={6} /></div>
+                <MathCaptcha onValidChange={onCaptchaChange} />
                 <Button disabled={loading} className="w-full bg-gradient-primary h-11">{loading ? "..." : "Créer mon compte"}</Button>
               </form>
             </TabsContent>
