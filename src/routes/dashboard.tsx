@@ -1,12 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { generateContractPDF, type ContractData } from "@/lib/contract-pdf";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -21,9 +25,12 @@ const STATUS_LABELS: Record<string, { label: string; icon: any; color: string }>
 };
 
 function Dashboard() {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"deliveries" | "recharges">("deliveries");
+  const qc = useQueryClient();
+  const [tab, setTab] = useState<"deliveries" | "recharges" | "contracts">("deliveries");
+  const [signingContract, setSigningContract] = useState<any | null>(null);
+  const [sigName, setSigName] = useState("");
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", replace: true });
@@ -32,27 +39,17 @@ function Dashboard() {
   const { data: deliveries } = useQuery({
     queryKey: ["deliveries", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("msn_deliveries")
-        .select("*, msn_relay_points(name, city, neighborhood)")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
+    queryFn: async () => (await supabase.from("msn_deliveries").select("*, msn_relay_points(name, city, neighborhood)").eq("user_id", user!.id).order("created_at",{ascending:false})).data ?? [],
   });
-
   const { data: recharges } = useQuery({
     queryKey: ["recharges", user?.id],
     enabled: !!user,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("msn_wallet_recharge_requests")
-        .select("*")
-        .eq("user_id", user!.id)
-        .order("created_at", { ascending: false });
-      return data ?? [];
-    },
+    queryFn: async () => (await supabase.from("msn_wallet_recharge_requests").select("*").eq("user_id", user!.id).order("created_at",{ascending:false})).data ?? [],
+  });
+  const { data: contracts } = useQuery({
+    queryKey: ["contracts", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("msn_contracts").select("*").eq("user_id", user!.id).order("created_at",{ascending:false})).data ?? [],
   });
 
   if (loading || !user) {
@@ -65,23 +62,44 @@ function Dashboard() {
     delivered: deliveries?.filter(d => d.status === "delivered").length ?? 0,
   };
 
+  const downloadContract = (c: ContractData) => {
+    const pdf = generateContractPDF(c);
+    pdf.save(`Contrat-${c.contract_number}.pdf`);
+  };
+
+  const signContract = async () => {
+    if (!signingContract || sigName.trim().length < 2) { toast.error("Saisissez votre signature (nom)"); return; }
+    const { error } = await supabase.from("msn_contracts").update({
+      partner_signature: sigName.trim(),
+      partner_signed_at: new Date().toISOString(),
+    }).eq("id", signingContract.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Contrat signé !");
+    setSigningContract(null); setSigName("");
+    qc.invalidateQueries({ queryKey: ["contracts"] });
+  };
+
   return (
     <div className="min-h-screen bg-muted/30">
       <SiteHeader />
       <main className="container mx-auto px-4 py-8 md:py-12">
-        {/* Header */}
         <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl md:text-4xl font-display font-bold">Bonjour, {profile?.full_name || "👋"}</h1>
             <p className="text-muted-foreground mt-1">Voici l'état de vos livraisons.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {isAdmin && (
+              <Button asChild size="lg" className="bg-gradient-bronze text-bronze-foreground shadow-elegant">
+                <Link to="/admin"><Shield className="mr-1 size-4" />Administration</Link>
+              </Button>
+            )}
             <Button asChild className="bg-gradient-primary shadow-glow"><Link to="/order"><Plus className="mr-1 size-4" />Nouvelle commande</Link></Button>
+            <Button asChild variant="outline"><Link to="/inbox"><Inbox className="mr-1 size-4" />Boîte canal</Link></Button>
             <Button asChild variant="outline"><Link to="/recharge"><Wallet className="mr-1 size-4" />Recharger</Link></Button>
           </div>
         </div>
 
-        {/* KPI Cards */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="rounded-2xl p-6 bg-gradient-bronze text-bronze-foreground shadow-elegant">
             <div className="flex items-center justify-between mb-3">
@@ -96,14 +114,14 @@ function Dashboard() {
           <Kpi icon={CheckCircle2} label="Livrées" value={stats.delivered} />
         </div>
 
-        {/* Tabs */}
         <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
-          <div className="flex border-b border-border">
-            <button onClick={() => setTab("deliveries")} className={`px-6 py-4 font-semibold text-sm transition ${tab==="deliveries"?"text-primary border-b-2 border-primary":"text-muted-foreground"}`}>Mes livraisons</button>
-            <button onClick={() => setTab("recharges")} className={`px-6 py-4 font-semibold text-sm transition ${tab==="recharges"?"text-primary border-b-2 border-primary":"text-muted-foreground"}`}>Mes recharges</button>
+          <div className="flex border-b border-border overflow-x-auto">
+            <TabBtn active={tab==="deliveries"} onClick={() => setTab("deliveries")}>Mes livraisons</TabBtn>
+            <TabBtn active={tab==="recharges"} onClick={() => setTab("recharges")}>Mes recharges</TabBtn>
+            <TabBtn active={tab==="contracts"} onClick={() => setTab("contracts")}>Mes contrats {contracts?.length ? `(${contracts.length})` : ""}</TabBtn>
           </div>
 
-          {tab === "deliveries" ? (
+          {tab === "deliveries" && (
             <div className="divide-y divide-border">
               {!deliveries?.length ? (
                 <EmptyState icon={Package} title="Aucune commande" desc="Passez votre première commande dès maintenant." cta={<Button asChild className="bg-gradient-primary"><Link to="/order">Commander</Link></Button>} />
@@ -116,7 +134,8 @@ function Dashboard() {
                       <div className="font-semibold">{d.provider_name}</div>
                       <div className="text-sm text-muted-foreground">
                         {d.order_code && <>Cmd #{d.order_code} · </>}
-                        {d.msn_relay_points ? `${d.msn_relay_points.name} — ${d.msn_relay_points.city}` : "Relais non sélectionné"}
+                        {(d as any).msn_relay_points ? `${(d as any).msn_relay_points.name} — ${(d as any).msn_relay_points.city}` : "Relais non sélectionné"}
+                        {d.estimated_distance_km && <> · {d.estimated_distance_km} km</>}
                       </div>
                     </div>
                     <Badge className={`${s.color} border`}><s.icon className="size-3 mr-1" />{s.label}</Badge>
@@ -125,7 +144,9 @@ function Dashboard() {
                 );
               })}
             </div>
-          ) : (
+          )}
+
+          {tab === "recharges" && (
             <div className="divide-y divide-border">
               {!recharges?.length ? (
                 <EmptyState icon={Wallet} title="Aucune recharge" desc="Rechargez votre portefeuille pour payer vos livraisons." cta={<Button asChild className="bg-gradient-primary"><Link to="/recharge">Recharger</Link></Button>} />
@@ -143,9 +164,30 @@ function Dashboard() {
               ))}
             </div>
           )}
+
+          {tab === "contracts" && (
+            <div className="divide-y divide-border">
+              {!contracts?.length ? (
+                <EmptyState icon={FileText} title="Aucun contrat" desc="Vos contrats de partenariat apparaîtront ici après acceptation de votre candidature." />
+              ) : contracts.map(c => (
+                <div key={c.id} className="p-5 flex flex-wrap items-center gap-4">
+                  <div className="size-12 rounded-xl bg-accent grid place-items-center text-bronze"><FileText /></div>
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="font-semibold">{c.space_name}</div>
+                    <div className="text-sm text-muted-foreground">N° {c.contract_number} · {c.city}, {c.neighborhood}</div>
+                  </div>
+                  {c.partner_signature ? (
+                    <Badge className="bg-success/20 text-success-foreground border-success/40 border">Signé</Badge>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setSigningContract(c)}><PenLine className="size-3 mr-1" />Signer</Button>
+                  )}
+                  <Button size="sm" className="bg-gradient-primary" onClick={() => downloadContract(c as ContractData)}><Download className="size-3 mr-1" />Télécharger</Button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* CTA become relay */}
         <div className="mt-8 rounded-2xl bg-hero text-white p-8 flex flex-wrap items-center justify-between gap-6 shadow-elegant relative overflow-hidden">
           <div className="glow-orb size-[300px] -right-10 -top-10" />
           <div className="flex items-start gap-4 relative">
@@ -158,10 +200,28 @@ function Dashboard() {
           <Button asChild className="bg-gradient-primary shadow-glow relative"><Link to="/become-relay">Postuler</Link></Button>
         </div>
       </main>
+
+      <Dialog open={!!signingContract} onOpenChange={(o) => !o && setSigningContract(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Signature numérique du contrat</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Saisissez votre nom complet pour signer numériquement le contrat <strong>{signingContract?.contract_number}</strong>.</p>
+          <Input placeholder="Votre nom complet" value={sigName} onChange={e => setSigName(e.target.value)} maxLength={80} />
+          <div className="p-4 rounded-lg bg-accent/40 border border-dashed text-center font-serif italic text-2xl text-primary">
+            {sigName || "Votre signature"}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSigningContract(null)}>Annuler</Button>
+            <Button className="bg-gradient-primary" onClick={signContract}>Signer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
+function TabBtn({ active, onClick, children }: any) {
+  return <button onClick={onClick} className={`px-6 py-4 font-semibold text-sm transition whitespace-nowrap ${active?"text-primary border-b-2 border-primary":"text-muted-foreground"}`}>{children}</button>;
+}
 function Kpi({ icon: Icon, label, value }: { icon: any; label: string; value: number }) {
   return (
     <div className="rounded-2xl p-6 bg-card border border-border shadow-soft">
@@ -173,7 +233,6 @@ function Kpi({ icon: Icon, label, value }: { icon: any; label: string; value: nu
     </div>
   );
 }
-
 function EmptyState({ icon: Icon, title, desc, cta }: any) {
   return (
     <div className="py-16 text-center">

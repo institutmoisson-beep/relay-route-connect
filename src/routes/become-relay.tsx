@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Store, TrendingUp, Shield, Star } from "lucide-react";
+import { Store, TrendingUp, Shield, Star, Upload, IdCard, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,13 +26,16 @@ const schema = z.object({
 });
 
 function BecomeRelay() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [idPhoto, setIdPhoto] = useState<File | null>(null);
+  const [spacePhoto, setSpacePhoto] = useState<File | null>(null);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) { navigate({ to: "/auth" }); return; }
+    if (!idPhoto || !spacePhoto) { toast.error("Téléchargez la photo de la pièce ET de l'espace"); return; }
     const f = new FormData(e.currentTarget);
     const parsed = schema.safeParse({
       space_name: f.get("space_name"),
@@ -45,12 +48,40 @@ function BecomeRelay() {
     });
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("msn_relay_applications").insert({ user_id: user.id, ...parsed.data });
+
+    const upload = async (file: File, kind: "id" | "space") => {
+      const path = `${user.id}/${kind}-${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("relay-applications").upload(path, file);
+      if (error) throw error;
+      return path;
+    };
+    let id_photo_url = ""; let space_photo_url = "";
+    try {
+      [id_photo_url, space_photo_url] = await Promise.all([upload(idPhoto, "id"), upload(spacePhoto, "space")]);
+    } catch (e: any) {
+      toast.error("Erreur d'upload: " + e.message); setSubmitting(false); return;
+    }
+
+    const { error } = await supabase.from("msn_relay_applications").insert({
+      user_id: user.id, ...parsed.data, id_photo_url, space_photo_url,
+    });
     setSubmitting(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Candidature envoyée ! Réponse sous 48h.");
     navigate({ to: "/dashboard" });
   };
+
+  const FileBox = ({ icon: Icon, label, file, onSet }: any) => (
+    <label className="flex items-center gap-3 p-4 border border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition">
+      <Icon className="size-5 text-muted-foreground" />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm font-medium">{label}</div>
+        <div className="text-xs text-muted-foreground truncate">{file?.name || "Cliquez pour sélectionner"}</div>
+      </div>
+      <Upload className="size-4 text-muted-foreground" />
+      <input type="file" accept="image/*" className="hidden" onChange={e => onSet(e.target.files?.[0] ?? null)} />
+    </label>
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,7 +120,14 @@ function BecomeRelay() {
             <div><Label>Adresse complète *</Label><Input name="address" required maxLength={300} /></div>
             <div><Label>Téléphone *</Label><Input name="phone" type="tel" required maxLength={20} /></div>
             <div><Label>Description</Label><Textarea name="description" maxLength={500} placeholder="Présentez votre espace, horaires d'ouverture..." /></div>
-            <Button disabled={submitting} className="w-full bg-gradient-primary h-11">{submitting ? "..." : (user ? "Envoyer ma candidature" : "Se connecter pour postuler")}</Button>
+
+            <div className="space-y-3 pt-2">
+              <Label>Pièces justificatives *</Label>
+              <FileBox icon={IdCard} label="Photo de votre pièce d'identité" file={idPhoto} onSet={setIdPhoto} />
+              <FileBox icon={ImageIcon} label="Photo de votre espace" file={spacePhoto} onSet={setSpacePhoto} />
+            </div>
+
+            <Button disabled={submitting} className="w-full bg-gradient-primary h-11">{submitting ? "Envoi..." : (user ? "Envoyer ma candidature" : "Se connecter pour postuler")}</Button>
           </form>
         </div>
 
