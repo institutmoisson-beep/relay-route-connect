@@ -14,6 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
+      msn_broadcasts: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          image_url: string | null
+          link_label: string | null
+          link_url: string | null
+          title: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_label?: string | null
+          link_url?: string | null
+          title: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          link_label?: string | null
+          link_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      msn_contracts: {
+        Row: {
+          address: string
+          application_id: string
+          city: string
+          contract_number: string
+          created_at: string
+          id: string
+          neighborhood: string
+          partner_name: string
+          partner_signature: string | null
+          partner_signed_at: string | null
+          relay_point_id: string | null
+          signed_by_admin: string
+          space_name: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          application_id: string
+          city: string
+          contract_number?: string
+          created_at?: string
+          id?: string
+          neighborhood: string
+          partner_name: string
+          partner_signature?: string | null
+          partner_signed_at?: string | null
+          relay_point_id?: string | null
+          signed_by_admin?: string
+          space_name: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          application_id?: string
+          city?: string
+          contract_number?: string
+          created_at?: string
+          id?: string
+          neighborhood?: string
+          partner_name?: string
+          partner_signature?: string | null
+          partner_signed_at?: string | null
+          relay_point_id?: string | null
+          signed_by_admin?: string
+          space_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       msn_deliveries: {
         Row: {
           at_relay_at: string | null
@@ -88,30 +172,39 @@ export type Database = {
       msn_pricing_config: {
         Row: {
           base_price: number
+          holiday_active: boolean
           holiday_multiplier: number
           id: number
           price_per_km: number
+          rain_active: boolean
           rain_multiplier: number
+          strike_active: boolean
           strike_multiplier: number
           updated_at: string
           weekend_multiplier: number
         }
         Insert: {
           base_price?: number
+          holiday_active?: boolean
           holiday_multiplier?: number
           id?: number
           price_per_km?: number
+          rain_active?: boolean
           rain_multiplier?: number
+          strike_active?: boolean
           strike_multiplier?: number
           updated_at?: string
           weekend_multiplier?: number
         }
         Update: {
           base_price?: number
+          holiday_active?: boolean
           holiday_multiplier?: number
           id?: number
           price_per_km?: number
+          rain_active?: boolean
           rain_multiplier?: number
+          strike_active?: boolean
           strike_multiplier?: number
           updated_at?: string
           weekend_multiplier?: number
@@ -127,10 +220,12 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          id_photo_url: string | null
           neighborhood: string
           phone: string
           reviewed_at: string | null
           space_name: string
+          space_photo_url: string | null
           space_type: Database["public"]["Enums"]["relay_space_type"]
           status: Database["public"]["Enums"]["application_status"]
           user_id: string
@@ -143,10 +238,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          id_photo_url?: string | null
           neighborhood: string
           phone: string
           reviewed_at?: string | null
           space_name: string
+          space_photo_url?: string | null
           space_type: Database["public"]["Enums"]["relay_space_type"]
           status?: Database["public"]["Enums"]["application_status"]
           user_id: string
@@ -159,10 +256,12 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          id_photo_url?: string | null
           neighborhood?: string
           phone?: string
           reviewed_at?: string | null
           space_name?: string
+          space_photo_url?: string | null
           space_type?: Database["public"]["Enums"]["relay_space_type"]
           status?: Database["public"]["Enums"]["application_status"]
           user_id?: string
@@ -176,6 +275,8 @@ export type Database = {
           country: string
           created_at: string
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
           neighborhood: string
           owner_id: string | null
@@ -192,6 +293,8 @@ export type Database = {
           country?: string
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
           neighborhood: string
           owner_id?: string | null
@@ -208,6 +311,8 @@ export type Database = {
           country?: string
           created_at?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
           neighborhood?: string
           owner_id?: string | null
