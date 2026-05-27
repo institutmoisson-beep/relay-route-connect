@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Package, Menu, X } from "lucide-react";
+import { Package, Menu, X, Shield, Inbox } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 
 export function SiteHeader() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const [open, setOpen] = useState(false);
 
   return (
@@ -26,11 +26,17 @@ export function SiteHeader() {
           <Link to="/become-relay" className="hover:text-primary transition-colors">Devenir relais</Link>
           <Link to="/relay-points" className="hover:text-primary transition-colors">Points relais</Link>
           {user && <Link to="/dashboard" className="hover:text-primary transition-colors">Tableau de bord</Link>}
+          {user && <Link to="/inbox" className="hover:text-primary transition-colors flex items-center gap-1"><Inbox className="size-4" />Canal</Link>}
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
+              {isAdmin && (
+                <Button asChild variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                  <Link to="/admin"><Shield className="size-4" />Admin</Link>
+                </Button>
+              )}
               <Button asChild variant="ghost"><Link to="/dashboard">Mon espace</Link></Button>
               <Button onClick={signOut} variant="outline">Déconnexion</Button>
             </>
@@ -56,6 +62,8 @@ export function SiteHeader() {
             {user ? (
               <>
                 <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2">Tableau de bord</Link>
+                <Link to="/inbox" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Inbox className="size-4" />Boîte canal</Link>
+                {isAdmin && <Link to="/admin" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1 text-primary font-semibold"><Shield className="size-4" />Administration</Link>}
                 <Button onClick={() => { signOut(); setOpen(false); }} variant="outline">Déconnexion</Button>
               </>
             ) : (

@@ -10,10 +10,14 @@ type Profile = {
   is_blocked: boolean;
 };
 
+type Role = "user" | "admin" | "super_admin" | "relay_owner";
+
 type AuthCtx = {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  roles: Role[];
+  isAdmin: boolean;
   loading: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -25,11 +29,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
-    const { data } = await supabase.from("profiles").select("*").eq("id", uid).maybeSingle();
-    setProfile(data as Profile | null);
+    const [{ data: p }, { data: r }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", uid),
+    ]);
+    setProfile(p as Profile | null);
+    setRoles(((r ?? []) as { role: Role }[]).map((x) => x.role));
   };
 
   useEffect(() => {
@@ -40,6 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTimeout(() => loadProfile(sess.user.id), 0);
       } else {
         setProfile(null);
+        setRoles([]);
       }
     });
 
@@ -61,8 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const isAdmin = roles.includes("admin") || roles.includes("super_admin");
+
   return (
-    <Ctx.Provider value={{ user, session, profile, loading, refreshProfile, signOut }}>
+    <Ctx.Provider value={{ user, session, profile, roles, isAdmin, loading, refreshProfile, signOut }}>
       {children}
     </Ctx.Provider>
   );
