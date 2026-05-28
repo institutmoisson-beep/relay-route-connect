@@ -574,7 +574,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
-          operator: Database["public"]["Enums"]["mobile_operator"]
+          operator: string
           reviewed_at: string | null
           sender_phone: string
           status: Database["public"]["Enums"]["recharge_status"]
@@ -586,7 +586,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
-          operator: Database["public"]["Enums"]["mobile_operator"]
+          operator: string
           reviewed_at?: string | null
           sender_phone: string
           status?: Database["public"]["Enums"]["recharge_status"]
@@ -598,7 +598,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
-          operator?: Database["public"]["Enums"]["mobile_operator"]
+          operator?: string
           reviewed_at?: string | null
           sender_phone?: string
           status?: Database["public"]["Enums"]["recharge_status"]
