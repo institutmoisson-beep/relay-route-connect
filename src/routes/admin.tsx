@@ -2,24 +2,40 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Shield, Send, CheckCircle2, XCircle, Image as ImageIcon, ExternalLink, Eye } from "lucide-react";
+import { Shield, Send, CheckCircle2, XCircle, Image as ImageIcon, ExternalLink, Eye, Plus, Trash2, Ban, Unlock, Package, Sprout, CreditCard, Users, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { compressImage } from "@/lib/image-compress";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
+
+const TABS = [
+  { k: "pricing", l: "Tarifs", icon: CreditCard },
+  { k: "users", l: "Utilisateurs", icon: Users },
+  { k: "relays", l: "Points relais", icon: Store },
+  { k: "applications", l: "Candidatures relais", icon: CheckCircle2 },
+  { k: "deliveries", l: "Livraisons", icon: Package },
+  { k: "recharges", l: "Recharges", icon: CreditCard },
+  { k: "payments", l: "Services paiement", icon: CreditCard },
+  { k: "products", l: "Produits Graine", icon: Sprout },
+  { k: "franchises", l: "Franchises Graine", icon: Sprout },
+  { k: "broadcast", l: "Diffusion", icon: Send },
+];
 
 function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"pricing" | "applications" | "recharges" | "broadcast">("pricing");
+  const [tab, setTab] = useState<string>("pricing");
 
   useEffect(() => {
     if (!loading) {
@@ -38,26 +54,28 @@ function AdminPage() {
           <div className="size-12 rounded-2xl bg-gradient-bronze text-bronze-foreground grid place-items-center shadow-elegant"><Shield className="size-6" /></div>
           <div>
             <h1 className="text-3xl font-display font-bold">Administration</h1>
-            <p className="text-muted-foreground text-sm">Pilotage MSN Delivery — Celvus Parfait</p>
+            <p className="text-muted-foreground text-sm">Pilotage MSN Delivery & La Graine — Celvus Parfait</p>
           </div>
         </div>
 
         <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
           <div className="flex border-b border-border overflow-x-auto">
-            {[
-              { k: "pricing", l: "Tarifs & conditions" },
-              { k: "applications", l: "Candidatures relais" },
-              { k: "recharges", l: "Recharges" },
-              { k: "broadcast", l: "Diffusion canal" },
-            ].map(t => (
-              <button key={t.k} onClick={() => setTab(t.k as any)} className={`px-6 py-4 text-sm font-semibold whitespace-nowrap ${tab===t.k?"text-primary border-b-2 border-primary":"text-muted-foreground"}`}>{t.l}</button>
+            {TABS.map(t => (
+              <button key={t.k} onClick={() => setTab(t.k)} className={`px-4 py-4 text-xs sm:text-sm font-semibold whitespace-nowrap flex items-center gap-1.5 ${tab===t.k?"text-primary border-b-2 border-primary":"text-muted-foreground"}`}>
+                <t.icon className="size-3.5" />{t.l}
+              </button>
             ))}
           </div>
-
           <div className="p-6">
             {tab === "pricing" && <PricingPanel qc={qc} />}
+            {tab === "users" && <UsersPanel qc={qc} />}
+            {tab === "relays" && <RelaysPanel qc={qc} />}
             {tab === "applications" && <ApplicationsPanel qc={qc} />}
+            {tab === "deliveries" && <DeliveriesPanel />}
             {tab === "recharges" && <RechargesPanel qc={qc} />}
+            {tab === "payments" && <PaymentServicesPanel qc={qc} />}
+            {tab === "products" && <ProductsPanel qc={qc} />}
+            {tab === "franchises" && <FranchisesPanel qc={qc} />}
             {tab === "broadcast" && <BroadcastPanel userId={user.id} qc={qc} />}
           </div>
         </div>
@@ -66,6 +84,7 @@ function AdminPage() {
   );
 }
 
+// ============= PRICING =============
 function PricingPanel({ qc }: any) {
   const { data: p } = useQuery({
     queryKey: ["admin-pricing"],
@@ -74,29 +93,19 @@ function PricingPanel({ qc }: any) {
   const [form, setForm] = useState<any>(null);
   useEffect(() => { if (p && !form) setForm(p); }, [p, form]);
   if (!form) return null;
-
   const save = async () => {
     const { error } = await supabase.from("msn_pricing_config").update({
-      base_price: Number(form.base_price),
-      price_per_km: Number(form.price_per_km),
-      weekend_multiplier: Number(form.weekend_multiplier),
-      rain_multiplier: Number(form.rain_multiplier),
-      holiday_multiplier: Number(form.holiday_multiplier),
-      strike_multiplier: Number(form.strike_multiplier),
-      rain_active: !!form.rain_active,
-      holiday_active: !!form.holiday_active,
-      strike_active: !!form.strike_active,
+      base_price: Number(form.base_price), price_per_km: Number(form.price_per_km),
+      weekend_multiplier: Number(form.weekend_multiplier), rain_multiplier: Number(form.rain_multiplier),
+      holiday_multiplier: Number(form.holiday_multiplier), strike_multiplier: Number(form.strike_multiplier),
+      rain_active: !!form.rain_active, holiday_active: !!form.holiday_active, strike_active: !!form.strike_active,
     }).eq("id", 1);
     if (error) { toast.error(error.message); return; }
     toast.success("Tarifs mis à jour");
     qc.invalidateQueries({ queryKey: ["pricing"] });
     qc.invalidateQueries({ queryKey: ["admin-pricing"] });
   };
-
-  const Num = ({ k, label }: any) => (
-    <div><Label>{label}</Label><Input type="number" step="0.01" value={form[k] ?? ""} onChange={e => setForm({ ...form, [k]: e.target.value })} /></div>
-  );
-
+  const Num = ({ k, label }: any) => (<div><Label>{label}</Label><Input type="number" step="0.01" value={form[k] ?? ""} onChange={e => setForm({ ...form, [k]: e.target.value })} /></div>);
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="grid sm:grid-cols-2 gap-4">
@@ -113,19 +122,14 @@ function PricingPanel({ qc }: any) {
         </div>
       </div>
       <div>
-        <h3 className="font-bold mb-3">Conditions actives maintenant</h3>
+        <h3 className="font-bold mb-3">Conditions actives</h3>
         <div className="space-y-3">
-          {[
-            { k: "rain_active", l: "Pluie en cours" },
-            { k: "holiday_active", l: "Jour férié aujourd'hui" },
-            { k: "strike_active", l: "Grève en cours" },
-          ].map(s => (
-            <label key={s.k} className="flex items-center justify-between p-3 rounded-lg border border-border">
+          {[{k:"rain_active",l:"Pluie en cours"},{k:"holiday_active",l:"Jour férié"},{k:"strike_active",l:"Grève en cours"}].map(s => (
+            <label key={s.k} className="flex items-center justify-between p-3 rounded-lg border">
               <span className="text-sm">{s.l}</span>
               <Switch checked={!!form[s.k]} onCheckedChange={(v) => setForm({ ...form, [s.k]: v })} />
             </label>
           ))}
-          <p className="text-xs text-muted-foreground">Le week-end est détecté automatiquement par le système.</p>
         </div>
       </div>
       <Button onClick={save} className="bg-gradient-primary">Enregistrer</Button>
@@ -133,6 +137,86 @@ function PricingPanel({ qc }: any) {
   );
 }
 
+// ============= USERS =============
+function UsersPanel({ qc }: any) {
+  const { data } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => (await supabase.from("profiles").select("*").order("created_at",{ascending:false}).limit(500)).data ?? [],
+  });
+  const toggleBlock = async (id: string, blocked: boolean) => {
+    const { error } = await supabase.from("profiles").update({ is_blocked: !blocked }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(blocked ? "Débloqué" : "Bloqué");
+    qc.invalidateQueries({ queryKey: ["admin-users"] });
+  };
+  return (
+    <div className="space-y-2">
+      {!data?.length && <p className="text-sm text-muted-foreground">Aucun utilisateur.</p>}
+      {data?.map(u => (
+        <div key={u.id} className="border rounded-xl p-4 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[200px]">
+            <div className="font-bold">{u.full_name || "—"} {u.is_blocked && <Badge className="bg-destructive/20 text-destructive border-destructive/40 border ml-2">Bloqué</Badge>}</div>
+            <div className="text-xs text-muted-foreground">{u.phone || "—"} · {Number(u.wallet_balance).toLocaleString("fr-FR")} FCFA</div>
+          </div>
+          <Button size="sm" variant={u.is_blocked ? "outline" : "destructive"} onClick={() => toggleBlock(u.id, u.is_blocked)}>
+            {u.is_blocked ? <><Unlock className="size-3 mr-1" />Débloquer</> : <><Ban className="size-3 mr-1" />Bloquer</>}
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============= RELAYS =============
+function RelaysPanel({ qc }: any) {
+  const { data } = useQuery({
+    queryKey: ["admin-relays"],
+    queryFn: async () => (await supabase.from("msn_relay_points").select("*").order("created_at",{ascending:false})).data ?? [],
+  });
+  const toggle = async (id: string, blocked: boolean) => {
+    const { error } = await supabase.from("msn_relay_points").update({ is_blocked: !blocked, status: !blocked ? "suspended" : "active" }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Mis à jour"); qc.invalidateQueries({ queryKey: ["admin-relays"] });
+  };
+  const del = async (id: string) => {
+    if (!confirm("Supprimer définitivement ce point relais ?")) return;
+    const { error } = await supabase.from("msn_relay_points").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Supprimé"); qc.invalidateQueries({ queryKey: ["admin-relays"] });
+  };
+  const setTrust = async (id: string, trust_level: string) => {
+    const { error } = await supabase.from("msn_relay_points").update({ trust_level: trust_level as any }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Niveau de confiance mis à jour"); qc.invalidateQueries({ queryKey: ["admin-relays"] });
+  };
+  return (
+    <div className="space-y-2">
+      {!data?.length && <p className="text-sm text-muted-foreground">Aucun relais.</p>}
+      {data?.map(r => (
+        <div key={r.id} className="border rounded-xl p-4 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[200px]">
+            <div className="font-bold">{r.name} {r.is_blocked && <Badge className="bg-destructive/20 text-destructive border-destructive/40 border ml-2">Bloqué</Badge>}</div>
+            <div className="text-xs text-muted-foreground">{r.city}, {r.neighborhood} · {r.space_type} · ★ {Number(r.rating).toFixed(1)} ({r.total_reviews})</div>
+          </div>
+          <Select defaultValue={r.trust_level} onValueChange={(v) => setTrust(r.id, v)}>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="standard">Standard</SelectItem>
+              <SelectItem value="verified">Vérifié</SelectItem>
+              <SelectItem value="premium">Premium</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant={r.is_blocked ? "outline" : "destructive"} onClick={() => toggle(r.id, r.is_blocked)}>
+            {r.is_blocked ? <><Unlock className="size-3 mr-1" />Débloquer</> : <><Ban className="size-3 mr-1" />Bloquer</>}
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => del(r.id)}><Trash2 className="size-3" /></Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============= APPLICATIONS =============
 function ApplicationsPanel({ qc }: any) {
   const { data } = useQuery({
     queryKey: ["admin-applications"],
@@ -140,35 +224,33 @@ function ApplicationsPanel({ qc }: any) {
   });
   const decide = async (id: string, status: "approved"|"rejected") => {
     const { error } = await supabase.from("msn_relay_applications").update({ status }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success(status === "approved" ? "Candidature approuvée + contrat généré" : "Candidature rejetée");
+    if (error) return toast.error(error.message);
+    toast.success(status === "approved" ? "Approuvée + contrat généré" : "Rejetée");
     qc.invalidateQueries({ queryKey: ["admin-applications"] });
   };
   const viewFile = async (path: string) => {
     const { data } = await supabase.storage.from("relay-applications").createSignedUrl(path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else toast.error("Fichier introuvable");
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank"); else toast.error("Fichier introuvable");
   };
   return (
     <div className="space-y-3">
-      {!data?.length && <p className="text-muted-foreground text-sm">Aucune candidature.</p>}
+      {!data?.length && <p className="text-sm text-muted-foreground">Aucune candidature.</p>}
       {data?.map(a => (
-        <div key={a.id} className="border border-border rounded-xl p-4 flex flex-wrap items-start gap-3">
+        <div key={a.id} className="border rounded-xl p-4 flex flex-wrap items-start gap-3">
           <div className="flex-1 min-w-[240px]">
             <div className="font-bold">{a.space_name} <span className="text-xs text-muted-foreground">· {a.space_type}</span></div>
             <div className="text-sm text-muted-foreground">{a.city}, {a.neighborhood} · {a.phone}</div>
             <div className="text-xs text-muted-foreground mt-1">{a.address}</div>
-            {a.description && <p className="text-sm mt-2 italic">"{a.description}"</p>}
             <div className="flex gap-2 mt-2">
-              {a.id_photo_url && <Button size="sm" variant="outline" onClick={() => viewFile(a.id_photo_url!)}><Eye className="size-3 mr-1" />Pièce ID</Button>}
+              {a.id_photo_url && <Button size="sm" variant="outline" onClick={() => viewFile(a.id_photo_url!)}><Eye className="size-3 mr-1" />ID</Button>}
               {a.space_photo_url && <Button size="sm" variant="outline" onClick={() => viewFile(a.space_photo_url!)}><Eye className="size-3 mr-1" />Espace</Button>}
             </div>
           </div>
-          <Badge className={a.status==="pending"?"bg-warning/20 border-warning/40 text-warning-foreground border":a.status==="approved"?"bg-success/20 border-success/40 border":"bg-destructive/20 border-destructive/40 border"}>{a.status}</Badge>
+          <Badge>{a.status}</Badge>
           {a.status === "pending" && (
             <div className="flex gap-2">
-              <Button size="sm" className="bg-success text-success-foreground" onClick={() => decide(a.id,"approved")}><CheckCircle2 className="size-3 mr-1" />Approuver</Button>
-              <Button size="sm" variant="destructive" onClick={() => decide(a.id,"rejected")}><XCircle className="size-3 mr-1" />Rejeter</Button>
+              <Button size="sm" className="bg-success text-success-foreground" onClick={() => decide(a.id,"approved")}>Approuver</Button>
+              <Button size="sm" variant="destructive" onClick={() => decide(a.id,"rejected")}>Rejeter</Button>
             </div>
           )}
         </div>
@@ -177,6 +259,30 @@ function ApplicationsPanel({ qc }: any) {
   );
 }
 
+// ============= DELIVERIES =============
+function DeliveriesPanel() {
+  const { data } = useQuery({
+    queryKey: ["admin-deliveries"],
+    queryFn: async () => (await supabase.from("msn_deliveries").select("*, msn_relay_points(name,city)").order("created_at",{ascending:false}).limit(200)).data ?? [],
+  });
+  return (
+    <div className="space-y-2">
+      {!data?.length && <p className="text-sm text-muted-foreground">Aucune livraison.</p>}
+      {data?.map(d => (
+        <div key={d.id} className="border rounded-xl p-4 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[240px]">
+            <div className="font-bold text-sm">{d.provider_name} {d.order_code && <span className="text-xs text-muted-foreground">· #{d.order_code}</span>}</div>
+            <div className="text-xs text-muted-foreground">{(d as any).msn_relay_points?.name ?? "Sans relais"} · {d.estimated_distance_km} km · {Number(d.delivery_price).toLocaleString("fr-FR")} FCFA</div>
+          </div>
+          <Badge>{d.status}</Badge>
+          <span className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleDateString("fr-FR")}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============= RECHARGES =============
 function RechargesPanel({ qc }: any) {
   const { data } = useQuery({
     queryKey: ["admin-recharges"],
@@ -184,19 +290,17 @@ function RechargesPanel({ qc }: any) {
   });
   const decide = async (id: string, status: "approved"|"rejected") => {
     const { error } = await supabase.from("msn_wallet_recharge_requests").update({ status }).eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Mis à jour");
-    qc.invalidateQueries({ queryKey: ["admin-recharges"] });
+    if (error) return toast.error(error.message);
+    toast.success("Mis à jour"); qc.invalidateQueries({ queryKey: ["admin-recharges"] });
   };
   return (
     <div className="space-y-3">
-      {!data?.length && <p className="text-muted-foreground text-sm">Aucune recharge.</p>}
+      {!data?.length && <p className="text-sm text-muted-foreground">Aucune recharge.</p>}
       {data?.map(r => (
-        <div key={r.id} className="border border-border rounded-xl p-4 flex flex-wrap items-center gap-3">
+        <div key={r.id} className="border rounded-xl p-4 flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[240px]">
-            <div className="font-bold">{Number(r.amount).toLocaleString("fr-FR")} FCFA · {r.operator.toUpperCase()}</div>
+            <div className="font-bold">{Number(r.amount).toLocaleString("fr-FR")} FCFA · {r.operator}</div>
             <div className="text-sm text-muted-foreground">TXN: {r.transaction_id} · {r.sender_phone}</div>
-            <div className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("fr-FR")}</div>
           </div>
           <Badge>{r.status}</Badge>
           {r.status === "pending" && (
@@ -211,6 +315,224 @@ function RechargesPanel({ qc }: any) {
   );
 }
 
+// ============= PAYMENT SERVICES =============
+function PaymentServicesPanel({ qc }: any) {
+  const { data } = useQuery({
+    queryKey: ["admin-payment-services"],
+    queryFn: async () => (await supabase.from("msn_payment_services").select("*").order("sort_order")).data ?? [],
+  });
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+
+  const save = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const payload: any = {
+      kind: f.get("kind"), label: String(f.get("label") || "").trim(),
+      identifier: String(f.get("identifier") || "").trim(),
+      instructions: String(f.get("instructions") || "").trim() || null,
+      link_url: String(f.get("link_url") || "").trim() || null,
+      sort_order: Number(f.get("sort_order") || 0),
+      is_active: f.get("is_active") === "on",
+    };
+    const { error } = editing
+      ? await supabase.from("msn_payment_services").update(payload).eq("id", editing.id)
+      : await supabase.from("msn_payment_services").insert(payload);
+    if (error) return toast.error(error.message);
+    toast.success("Enregistré");
+    setOpen(false); setEditing(null);
+    qc.invalidateQueries({ queryKey: ["admin-payment-services"] });
+    qc.invalidateQueries({ queryKey: ["payment-services"] });
+  };
+  const del = async (id: string) => {
+    if (!confirm("Supprimer ce service ?")) return;
+    const { error } = await supabase.from("msn_payment_services").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Supprimé"); qc.invalidateQueries({ queryKey: ["admin-payment-services"] });
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between mb-4">
+        <p className="text-sm text-muted-foreground">Mobile money, lien de paiement, adresse crypto.</p>
+        <Button size="sm" className="bg-gradient-primary" onClick={() => { setEditing(null); setOpen(true); }}><Plus className="size-3 mr-1" />Ajouter</Button>
+      </div>
+      <div className="space-y-2">
+        {data?.map(s => (
+          <div key={s.id} className="border rounded-xl p-4 flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-[240px]">
+              <div className="font-bold">{s.label} <span className="text-xs text-muted-foreground">· {s.kind}</span> {!s.is_active && <Badge className="ml-2">Inactif</Badge>}</div>
+              <div className="text-xs text-muted-foreground break-all">{s.identifier}</div>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => { setEditing(s); setOpen(true); }}>Modifier</Button>
+            <Button size="sm" variant="ghost" onClick={() => del(s.id)}><Trash2 className="size-3" /></Button>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing ? "Modifier" : "Nouveau"} service de paiement</DialogTitle></DialogHeader>
+          <form onSubmit={save} className="space-y-3">
+            <div>
+              <Label>Type</Label>
+              <Select name="kind" defaultValue={editing?.kind || "mobile_money"}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="mobile_money">Mobile Money</SelectItem>
+                  <SelectItem value="payment_link">Lien de paiement</SelectItem>
+                  <SelectItem value="crypto">Cryptomonnaie</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Libellé</Label><Input name="label" required defaultValue={editing?.label} /></div>
+            <div><Label>Identifiant (numéro / adresse)</Label><Input name="identifier" required defaultValue={editing?.identifier} placeholder="+225..., bc1q..., URL" /></div>
+            <div><Label>Lien externe (optionnel)</Label><Input name="link_url" type="url" defaultValue={editing?.link_url} placeholder="https://..." /></div>
+            <div><Label>Instructions</Label><Textarea name="instructions" defaultValue={editing?.instructions} rows={3} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Ordre</Label><Input name="sort_order" type="number" defaultValue={editing?.sort_order || 0} /></div>
+              <label className="flex items-end gap-2 pb-2"><input type="checkbox" name="is_active" defaultChecked={editing?.is_active ?? true} /> Actif</label>
+            </div>
+            <DialogFooter><Button type="submit" className="bg-gradient-primary">Enregistrer</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ============= PRODUCTS =============
+function ProductsPanel({ qc }: any) {
+  const { data } = useQuery({
+    queryKey: ["admin-products"],
+    queryFn: async () => (await supabase.from("graine_products").select("*").order("created_at",{ascending:false})).data ?? [],
+  });
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
+  const [file, setFile] = useState<File | null>(null);
+
+  const save = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    let image_url = editing?.image_url ?? null;
+    if (file) {
+      const compressed = await compressImage(file);
+      const path = `${Date.now()}-${compressed.name}`;
+      const { error: upErr } = await supabase.storage.from("graine-products").upload(path, compressed, { upsert: true });
+      if (upErr) return toast.error(upErr.message);
+      image_url = supabase.storage.from("graine-products").getPublicUrl(path).data.publicUrl;
+    }
+    const payload: any = {
+      name: String(f.get("name") || "").trim(),
+      description: String(f.get("description") || "").trim() || null,
+      price: Number(f.get("price") || 0),
+      quantity: Number(f.get("quantity") || 0),
+      category: String(f.get("category") || "").trim() || null,
+      is_active: f.get("is_active") === "on",
+      image_url,
+    };
+    const { error } = editing
+      ? await supabase.from("graine_products").update(payload).eq("id", editing.id)
+      : await supabase.from("graine_products").insert(payload);
+    if (error) return toast.error(error.message);
+    toast.success("Enregistré");
+    setOpen(false); setEditing(null); setFile(null);
+    qc.invalidateQueries({ queryKey: ["admin-products"] });
+    qc.invalidateQueries({ queryKey: ["graine-products"] });
+  };
+  const del = async (id: string) => {
+    if (!confirm("Supprimer ce produit ?")) return;
+    const { error } = await supabase.from("graine_products").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Supprimé"); qc.invalidateQueries({ queryKey: ["admin-products"] });
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between mb-4">
+        <p className="text-sm text-muted-foreground">Catalogue La Graine — produits proposables aux franchisés.</p>
+        <Button size="sm" className="bg-gradient-primary" onClick={() => { setEditing(null); setFile(null); setOpen(true); }}><Plus className="size-3 mr-1" />Ajouter</Button>
+      </div>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {data?.map(p => (
+          <div key={p.id} className="border rounded-xl overflow-hidden">
+            {p.image_url ? <img src={p.image_url} alt={p.name} className="aspect-video w-full object-cover" /> : <div className="aspect-video bg-accent grid place-items-center"><Sprout className="size-8 text-bronze" /></div>}
+            <div className="p-3">
+              <div className="font-bold text-sm">{p.name}</div>
+              <div className="text-xs text-muted-foreground">{Number(p.price).toLocaleString("fr-FR")} F · Stock {p.quantity}</div>
+              <div className="flex gap-2 mt-2">
+                <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditing(p); setFile(null); setOpen(true); }}>Modifier</Button>
+                <Button size="sm" variant="ghost" onClick={() => del(p.id)}><Trash2 className="size-3" /></Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing ? "Modifier" : "Nouveau"} produit Graine</DialogTitle></DialogHeader>
+          <form onSubmit={save} className="space-y-3">
+            <div><Label>Nom</Label><Input name="name" required defaultValue={editing?.name} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Prix (FCFA)</Label><Input name="price" type="number" min={0} required defaultValue={editing?.price || 0} /></div>
+              <div><Label>Quantité</Label><Input name="quantity" type="number" min={0} required defaultValue={editing?.quantity || 0} /></div>
+            </div>
+            <div><Label>Catégorie</Label><Input name="category" defaultValue={editing?.category} /></div>
+            <div><Label>Description</Label><Textarea name="description" defaultValue={editing?.description} rows={3} /></div>
+            <div>
+              <Label>Image</Label>
+              <label className="flex items-center gap-2 p-3 border border-dashed rounded-lg cursor-pointer">
+                <ImageIcon className="size-4" /><span className="text-sm flex-1">{file?.name || (editing?.image_url ? "Garder image actuelle" : "Choisir")}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
+              </label>
+            </div>
+            <label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={editing?.is_active ?? true} /> Actif</label>
+            <DialogFooter><Button type="submit" className="bg-gradient-primary">Enregistrer</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ============= FRANCHISES =============
+function FranchisesPanel({ qc }: any) {
+  const { data } = useQuery({
+    queryKey: ["admin-franchises"],
+    queryFn: async () => (await supabase.from("graine_franchise_applications").select("*").order("created_at",{ascending:false})).data ?? [],
+  });
+  const decide = async (id: string, status: "approved"|"rejected") => {
+    const { error } = await supabase.from("graine_franchise_applications").update({ status }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success(status === "approved" ? "Approuvée + contrat franchise généré" : "Rejetée");
+    qc.invalidateQueries({ queryKey: ["admin-franchises"] });
+  };
+  return (
+    <div className="space-y-2">
+      {!data?.length && <p className="text-sm text-muted-foreground">Aucune candidature franchise.</p>}
+      {data?.map(a => (
+        <div key={a.id} className="border rounded-xl p-4 flex flex-wrap items-start gap-3">
+          <div className="flex-1 min-w-[240px]">
+            <div className="font-bold">{a.shop_name} <span className="text-xs text-muted-foreground">· {a.shop_type}</span></div>
+            <div className="text-sm text-muted-foreground">{a.city}, {a.neighborhood} · {a.phone}</div>
+            <div className="text-xs text-muted-foreground">{a.selected_product_ids?.length || 0} produit(s) sélectionné(s)</div>
+            {a.description && <p className="text-sm mt-1 italic line-clamp-2">"{a.description}"</p>}
+          </div>
+          <Badge>{a.status}</Badge>
+          {a.status === "pending" && (
+            <div className="flex gap-2">
+              <Button size="sm" className="bg-success text-success-foreground" onClick={() => decide(a.id,"approved")}>Approuver</Button>
+              <Button size="sm" variant="destructive" onClick={() => decide(a.id,"rejected")}>Rejeter</Button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============= BROADCAST =============
 function BroadcastPanel({ userId, qc }: any) {
   const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -218,7 +540,6 @@ function BroadcastPanel({ userId, qc }: any) {
     queryKey: ["admin-broadcasts"],
     queryFn: async () => (await supabase.from("msn_broadcasts").select("*").order("created_at",{ascending:false}).limit(20)).data ?? [],
   });
-
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -226,50 +547,46 @@ function BroadcastPanel({ userId, qc }: any) {
     const body = String(f.get("body") || "").trim();
     const link_url = String(f.get("link_url") || "").trim() || null;
     const link_label = String(f.get("link_label") || "").trim() || null;
-    if (title.length < 2 || body.length < 2) { toast.error("Titre et message requis"); return; }
+    if (title.length < 2 || body.length < 2) return toast.error("Titre et message requis");
     setSubmitting(true);
     let image_url: string | null = null;
     if (file) {
-      const path = `${userId}/${Date.now()}-${file.name}`;
-      const { error: upErr } = await supabase.storage.from("broadcast-media").upload(path, file);
+      const compressed = await compressImage(file);
+      const path = `${userId}/${Date.now()}-${compressed.name}`;
+      const { error: upErr } = await supabase.storage.from("broadcast-media").upload(path, compressed);
       if (upErr) { toast.error(upErr.message); setSubmitting(false); return; }
-      const { data: pub } = supabase.storage.from("broadcast-media").getPublicUrl(path);
-      image_url = pub.publicUrl;
+      image_url = supabase.storage.from("broadcast-media").getPublicUrl(path).data.publicUrl;
     }
     const { error } = await supabase.from("msn_broadcasts").insert({ author_id: userId, title, body, image_url, link_url, link_label });
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Message diffusé à tous les utilisateurs");
-    (e.target as HTMLFormElement).reset(); setFile(null);
+    if (error) return toast.error(error.message);
+    toast.success("Diffusé à tous"); (e.target as HTMLFormElement).reset(); setFile(null);
     qc.invalidateQueries({ queryKey: ["admin-broadcasts"] });
     qc.invalidateQueries({ queryKey: ["broadcasts"] });
   };
-
   return (
     <div className="grid lg:grid-cols-2 gap-6">
       <form onSubmit={submit} className="space-y-3">
-        <h3 className="font-bold mb-1">Nouveau message canal</h3>
         <div><Label>Titre</Label><Input name="title" required maxLength={100} /></div>
         <div><Label>Message</Label><Textarea name="body" required maxLength={2000} rows={6} /></div>
         <div className="grid sm:grid-cols-2 gap-3">
-          <div><Label>Lien (Zoom, réunion...)</Label><Input name="link_url" type="url" placeholder="https://zoom.us/..." /></div>
-          <div><Label>Libellé du lien</Label><Input name="link_label" maxLength={50} placeholder="Rejoindre la réunion" /></div>
+          <div><Label>Lien</Label><Input name="link_url" type="url" placeholder="https://..." /></div>
+          <div><Label>Libellé du lien</Label><Input name="link_label" maxLength={50} /></div>
         </div>
         <div>
           <Label>Image (optionnelle)</Label>
-          <label className="flex items-center gap-3 p-3 border border-dashed border-border rounded-xl cursor-pointer hover:border-primary transition">
-            <ImageIcon className="size-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{file?.name || "Choisir une image"}</span>
+          <label className="flex items-center gap-3 p-3 border border-dashed rounded-xl cursor-pointer">
+            <ImageIcon className="size-4" /><span className="text-sm flex-1">{file?.name || "Choisir une image"}</span>
             <input type="file" accept="image/*" className="hidden" onChange={e => setFile(e.target.files?.[0] ?? null)} />
           </label>
         </div>
-        <Button disabled={submitting} className="w-full bg-gradient-primary h-11"><Send className="size-4" />{submitting ? "Envoi..." : "Diffuser à tous"}</Button>
+        <Button disabled={submitting} className="w-full bg-gradient-primary h-11"><Send className="size-4" />{submitting ? "..." : "Diffuser à tous"}</Button>
       </form>
       <div>
         <h3 className="font-bold mb-3">Historique</h3>
         <div className="space-y-2 max-h-[500px] overflow-y-auto">
           {history?.map(m => (
-            <div key={m.id} className="border border-border rounded-lg p-3">
+            <div key={m.id} className="border rounded-lg p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="font-semibold text-sm">{m.title}</div>
                 <div className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleDateString("fr-FR")}</div>
@@ -278,7 +595,6 @@ function BroadcastPanel({ userId, qc }: any) {
               {m.link_url && <a href={m.link_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary inline-flex items-center gap-1 mt-1"><ExternalLink className="size-3" />{m.link_label || "Lien"}</a>}
             </div>
           ))}
-          {!history?.length && <p className="text-sm text-muted-foreground">Aucun message diffusé.</p>}
         </div>
       </div>
     </div>
