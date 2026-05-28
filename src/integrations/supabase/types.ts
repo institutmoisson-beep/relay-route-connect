@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      graine_franchise_applications: {
+        Row: {
+          address: string
+          admin_notes: string | null
+          city: string
+          country: string
+          created_at: string
+          description: string | null
+          id: string
+          monthly_revenue: number | null
+          neighborhood: string
+          owner_id_url: string | null
+          phone: string
+          reviewed_at: string | null
+          selected_product_ids: string[]
+          shop_name: string
+          shop_photo_url: string | null
+          shop_type: string
+          status: Database["public"]["Enums"]["graine_franchise_status"]
+          user_id: string
+        }
+        Insert: {
+          address: string
+          admin_notes?: string | null
+          city: string
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          monthly_revenue?: number | null
+          neighborhood: string
+          owner_id_url?: string | null
+          phone: string
+          reviewed_at?: string | null
+          selected_product_ids?: string[]
+          shop_name: string
+          shop_photo_url?: string | null
+          shop_type: string
+          status?: Database["public"]["Enums"]["graine_franchise_status"]
+          user_id: string
+        }
+        Update: {
+          address?: string
+          admin_notes?: string | null
+          city?: string
+          country?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          monthly_revenue?: number | null
+          neighborhood?: string
+          owner_id_url?: string | null
+          phone?: string
+          reviewed_at?: string | null
+          selected_product_ids?: string[]
+          shop_name?: string
+          shop_photo_url?: string | null
+          shop_type?: string
+          status?: Database["public"]["Enums"]["graine_franchise_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      graine_franchise_contracts: {
+        Row: {
+          address: string
+          application_id: string
+          city: string
+          contract_number: string
+          created_at: string
+          franchisee_name: string
+          franchisee_signature: string | null
+          franchisee_signed_at: string | null
+          id: string
+          neighborhood: string
+          resupply_quota_pct: number
+          shop_name: string
+          signed_by_admin: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          application_id: string
+          city: string
+          contract_number?: string
+          created_at?: string
+          franchisee_name: string
+          franchisee_signature?: string | null
+          franchisee_signed_at?: string | null
+          id?: string
+          neighborhood: string
+          resupply_quota_pct?: number
+          shop_name: string
+          signed_by_admin?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          application_id?: string
+          city?: string
+          contract_number?: string
+          created_at?: string
+          franchisee_name?: string
+          franchisee_signature?: string | null
+          franchisee_signed_at?: string | null
+          id?: string
+          neighborhood?: string
+          resupply_quota_pct?: number
+          shop_name?: string
+          signed_by_admin?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      graine_products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price: number
+          quantity: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price?: number
+          quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price?: number
+          quantity?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       msn_broadcasts: {
         Row: {
           author_id: string
@@ -169,6 +322,48 @@ export type Database = {
           },
         ]
       }
+      msn_payment_services: {
+        Row: {
+          created_at: string
+          id: string
+          identifier: string
+          instructions: string | null
+          is_active: boolean
+          kind: Database["public"]["Enums"]["payment_service_kind"]
+          label: string
+          link_url: string | null
+          logo_url: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          identifier: string
+          instructions?: string | null
+          is_active?: boolean
+          kind: Database["public"]["Enums"]["payment_service_kind"]
+          label: string
+          link_url?: string | null
+          logo_url?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          identifier?: string
+          instructions?: string | null
+          is_active?: boolean
+          kind?: Database["public"]["Enums"]["payment_service_kind"]
+          label?: string
+          link_url?: string | null
+          logo_url?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       msn_pricing_config: {
         Row: {
           base_price: number
@@ -275,6 +470,7 @@ export type Database = {
           country: string
           created_at: string
           id: string
+          is_blocked: boolean
           latitude: number | null
           longitude: number | null
           name: string
@@ -293,6 +489,7 @@ export type Database = {
           country?: string
           created_at?: string
           id?: string
+          is_blocked?: boolean
           latitude?: number | null
           longitude?: number | null
           name: string
@@ -311,6 +508,7 @@ export type Database = {
           country?: string
           created_at?: string
           id?: string
+          is_blocked?: boolean
           latitude?: number | null
           longitude?: number | null
           name?: string
@@ -376,7 +574,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
-          operator: Database["public"]["Enums"]["mobile_operator"]
+          operator: string
           reviewed_at: string | null
           sender_phone: string
           status: Database["public"]["Enums"]["recharge_status"]
@@ -388,7 +586,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
-          operator: Database["public"]["Enums"]["mobile_operator"]
+          operator: string
           reviewed_at?: string | null
           sender_phone: string
           status?: Database["public"]["Enums"]["recharge_status"]
@@ -400,7 +598,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
-          operator?: Database["public"]["Enums"]["mobile_operator"]
+          operator?: string
           reviewed_at?: string | null
           sender_phone?: string
           status?: Database["public"]["Enums"]["recharge_status"]
@@ -482,8 +680,10 @@ export type Database = {
         | "at_relay"
         | "delivered"
         | "cancelled"
+      graine_franchise_status: "pending" | "approved" | "rejected"
       mobile_operator: "orange" | "moov" | "mtn" | "wave"
       payment_mode: "msn_delivery" | "direct_provider"
+      payment_service_kind: "mobile_money" | "payment_link" | "crypto"
       recharge_status: "pending" | "approved" | "rejected"
       relay_space_type:
         | "shop"
@@ -630,8 +830,10 @@ export const Constants = {
         "delivered",
         "cancelled",
       ],
+      graine_franchise_status: ["pending", "approved", "rejected"],
       mobile_operator: ["orange", "moov", "mtn", "wave"],
       payment_mode: ["msn_delivery", "direct_provider"],
+      payment_service_kind: ["mobile_money", "payment_link", "crypto"],
       recharge_status: ["pending", "approved", "rejected"],
       relay_space_type: [
         "shop",
