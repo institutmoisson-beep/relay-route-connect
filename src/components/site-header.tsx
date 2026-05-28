@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Package, Menu, X, Shield, Inbox } from "lucide-react";
+import { Package, Menu, X, Shield, Inbox, Sprout } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -25,6 +25,7 @@ export function SiteHeader() {
           <Link to="/" className="hover:text-primary transition-colors">Accueil</Link>
           <Link to="/become-relay" className="hover:text-primary transition-colors">Devenir relais</Link>
           <Link to="/relay-points" className="hover:text-primary transition-colors">Points relais</Link>
+          <Link to="/franchise" className="hover:text-primary transition-colors flex items-center gap-1"><Sprout className="size-4" />La Graine</Link>
           {user && <Link to="/dashboard" className="hover:text-primary transition-colors">Tableau de bord</Link>}
           {user && <Link to="/inbox" className="hover:text-primary transition-colors flex items-center gap-1"><Inbox className="size-4" />Canal</Link>}
         </nav>
@@ -59,6 +60,7 @@ export function SiteHeader() {
             <Link to="/" onClick={() => setOpen(false)} className="py-2">Accueil</Link>
             <Link to="/become-relay" onClick={() => setOpen(false)} className="py-2">Devenir relais</Link>
             <Link to="/relay-points" onClick={() => setOpen(false)} className="py-2">Points relais</Link>
+            <Link to="/franchise" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Sprout className="size-4" />La Graine</Link>
             {user ? (
               <>
                 <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2">Tableau de bord</Link>
