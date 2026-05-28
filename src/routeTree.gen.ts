@@ -13,6 +13,7 @@ import { Route as RelayPointsRouteImport } from './routes/relay-points'
 import { Route as RechargeRouteImport } from './routes/recharge'
 import { Route as OrderRouteImport } from './routes/order'
 import { Route as InboxRouteImport } from './routes/inbox'
+import { Route as FranchiseRouteImport } from './routes/franchise'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BecomeRelayRouteImport } from './routes/become-relay'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -37,6 +38,11 @@ const OrderRoute = OrderRouteImport.update({
 const InboxRoute = InboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FranchiseRoute = FranchiseRouteImport.update({
+  id: '/franchise',
+  path: '/franchise',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
+  '/franchise': typeof FranchiseRoute
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
+  '/franchise': typeof FranchiseRoute
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
+  '/franchise': typeof FranchiseRoute
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/become-relay'
     | '/dashboard'
+    | '/franchise'
     | '/inbox'
     | '/order'
     | '/recharge'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/become-relay'
     | '/dashboard'
+    | '/franchise'
     | '/inbox'
     | '/order'
     | '/recharge'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/become-relay'
     | '/dashboard'
+    | '/franchise'
     | '/inbox'
     | '/order'
     | '/recharge'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   BecomeRelayRoute: typeof BecomeRelayRoute
   DashboardRoute: typeof DashboardRoute
+  FranchiseRoute: typeof FranchiseRoute
   InboxRoute: typeof InboxRoute
   OrderRoute: typeof OrderRoute
   RechargeRoute: typeof RechargeRoute
@@ -175,6 +188,13 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/inbox'
       preLoaderRoute: typeof InboxRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/franchise': {
+      id: '/franchise'
+      path: '/franchise'
+      fullPath: '/franchise'
+      preLoaderRoute: typeof FranchiseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   BecomeRelayRoute: BecomeRelayRoute,
   DashboardRoute: DashboardRoute,
+  FranchiseRoute: FranchiseRoute,
   InboxRoute: InboxRoute,
   OrderRoute: OrderRoute,
   RechargeRoute: RechargeRoute,
@@ -229,3 +250,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
