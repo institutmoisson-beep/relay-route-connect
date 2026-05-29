@@ -305,6 +305,40 @@ function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!signingFranchise} onOpenChange={(o) => !o && setSigningFranchise(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Signature contrat franchise La Graine</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Signez le contrat franchise <strong>{signingFranchise?.contract_number}</strong> en saisissant votre nom complet.</p>
+          <Input placeholder="Votre nom complet" value={sigName} onChange={e => setSigName(e.target.value)} maxLength={80} />
+          <div className="p-4 rounded-lg bg-accent/40 border border-dashed text-center font-serif italic text-2xl text-primary">
+            {sigName || "Votre signature"}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSigningFranchise(null)}>Annuler</Button>
+            <Button className="bg-gradient-primary" onClick={signFranchise}>Signer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!ratingDelivery} onOpenChange={(o) => !o && setRatingDelivery(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Noter le point relais</DialogTitle></DialogHeader>
+          <div className="flex justify-center gap-2 py-2">
+            {[1,2,3,4,5].map(n => (
+              <button key={n} type="button" onClick={() => setRatingStars(n)}>
+                <Star className={`size-8 ${n <= ratingStars ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+              </button>
+            ))}
+          </div>
+          <Textarea placeholder="Votre commentaire (optionnel)" value={ratingComment} onChange={e => setRatingComment(e.target.value)} maxLength={500} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRatingDelivery(null)}>Annuler</Button>
+            <Button className="bg-gradient-primary" onClick={submitRating}>Envoyer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
