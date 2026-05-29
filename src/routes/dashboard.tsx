@@ -1,20 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine } from "lucide-react";
+import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine, Star, Sprout } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { generateContractPDF, type ContractData } from "@/lib/contract-pdf";
+import { generateFranchiseContractPDF, type FranchiseContractData } from "@/lib/franchise-pdf";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
+
 
 const STATUS_LABELS: Record<string, { label: string; icon: any; color: string }> = {
   pending: { label: "En attente", icon: Clock, color: "bg-warning/20 text-warning-foreground border-warning/40" },
