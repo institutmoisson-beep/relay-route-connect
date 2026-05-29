@@ -179,8 +179,10 @@ function Dashboard() {
           <div className="flex border-b border-border overflow-x-auto">
             <TabBtn active={tab==="deliveries"} onClick={() => setTab("deliveries")}>Mes livraisons</TabBtn>
             <TabBtn active={tab==="recharges"} onClick={() => setTab("recharges")}>Mes recharges</TabBtn>
-            <TabBtn active={tab==="contracts"} onClick={() => setTab("contracts")}>Mes contrats {contracts?.length ? `(${contracts.length})` : ""}</TabBtn>
+            <TabBtn active={tab==="contracts"} onClick={() => setTab("contracts")}>Contrats relais {contracts?.length ? `(${contracts.length})` : ""}</TabBtn>
+            <TabBtn active={tab==="franchises"} onClick={() => setTab("franchises")}>Franchises La Graine {franchises?.length ? `(${franchises.length})` : ""}</TabBtn>
           </div>
+
 
           {tab === "deliveries" && (
             <div className="divide-y divide-border">
