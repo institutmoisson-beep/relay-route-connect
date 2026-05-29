@@ -1,20 +1,23 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine } from "lucide-react";
+import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine, Star, Sprout } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { generateContractPDF, type ContractData } from "@/lib/contract-pdf";
+import { generateFranchiseContractPDF, type FranchiseContractData } from "@/lib/franchise-pdf";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
+
 
 const STATUS_LABELS: Record<string, { label: string; icon: any; color: string }> = {
   pending: { label: "En attente", icon: Clock, color: "bg-warning/20 text-warning-foreground border-warning/40" },
@@ -28,9 +31,15 @@ function Dashboard() {
   const { user, profile, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const [tab, setTab] = useState<"deliveries" | "recharges" | "contracts">("deliveries");
+
+  const [tab, setTab] = useState<"deliveries" | "recharges" | "contracts" | "franchises">("deliveries");
   const [signingContract, setSigningContract] = useState<any | null>(null);
+  const [signingFranchise, setSigningFranchise] = useState<any | null>(null);
   const [sigName, setSigName] = useState("");
+  const [ratingDelivery, setRatingDelivery] = useState<any | null>(null);
+  const [ratingStars, setRatingStars] = useState(5);
+  const [ratingComment, setRatingComment] = useState("");
+
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/auth", replace: true });
@@ -51,6 +60,18 @@ function Dashboard() {
     enabled: !!user,
     queryFn: async () => (await supabase.from("msn_contracts").select("*").eq("user_id", user!.id).order("created_at",{ascending:false})).data ?? [],
   });
+  const { data: franchises } = useQuery({
+    queryKey: ["franchise-contracts", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("graine_franchise_contracts").select("*").eq("user_id", user!.id).order("created_at",{ascending:false})).data ?? [],
+  });
+  const { data: myReviews } = useQuery({
+    queryKey: ["my-reviews", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("msn_relay_reviews").select("delivery_id").eq("user_id", user!.id)).data ?? [],
+  });
+  const reviewedIds = new Set((myReviews ?? []).map((r: any) => r.delivery_id));
+
 
   if (loading || !user) {
     return <div className="min-h-screen grid place-items-center">Chargement…</div>;
@@ -77,7 +98,47 @@ function Dashboard() {
     toast.success("Contrat signé !");
     setSigningContract(null); setSigName("");
     qc.invalidateQueries({ queryKey: ["contracts"] });
+    qc.invalidateQueries({ queryKey: ["contracts"] });
   };
+
+  const downloadFranchise = (c: FranchiseContractData) => {
+    const pdf = generateFranchiseContractPDF(c);
+    pdf.save(`Franchise-${c.contract_number}.pdf`);
+  };
+
+  const signFranchise = async () => {
+    if (!signingFranchise || sigName.trim().length < 2) { toast.error("Saisissez votre signature (nom)"); return; }
+    const { error } = await supabase.from("graine_franchise_contracts").update({
+      franchisee_signature: sigName.trim(),
+      franchisee_signed_at: new Date().toISOString(),
+    }).eq("id", signingFranchise.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Contrat franchise signé !");
+    setSigningFranchise(null); setSigName("");
+    qc.invalidateQueries({ queryKey: ["franchise-contracts"] });
+  };
+
+  const submitRating = async () => {
+    if (!ratingDelivery) return;
+    const { error } = await supabase.from("msn_relay_reviews").insert({
+      user_id: user!.id,
+      relay_point_id: ratingDelivery.relay_point_id,
+      delivery_id: ratingDelivery.id,
+      rating: ratingStars,
+      comment: ratingComment.trim() || null,
+    });
+    if (error) { toast.error(error.message); return; }
+    // Update relay aggregate
+    const { data: agg } = await supabase.from("msn_relay_reviews").select("rating").eq("relay_point_id", ratingDelivery.relay_point_id);
+    if (agg && agg.length) {
+      const avg = agg.reduce((s: number, r: any) => s + r.rating, 0) / agg.length;
+      await supabase.from("msn_relay_points").update({ rating: Number(avg.toFixed(2)), total_reviews: agg.length }).eq("id", ratingDelivery.relay_point_id);
+    }
+    toast.success("Merci pour votre avis !");
+    setRatingDelivery(null); setRatingStars(5); setRatingComment("");
+    qc.invalidateQueries({ queryKey: ["my-reviews"] });
+  };
+
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -118,8 +179,10 @@ function Dashboard() {
           <div className="flex border-b border-border overflow-x-auto">
             <TabBtn active={tab==="deliveries"} onClick={() => setTab("deliveries")}>Mes livraisons</TabBtn>
             <TabBtn active={tab==="recharges"} onClick={() => setTab("recharges")}>Mes recharges</TabBtn>
-            <TabBtn active={tab==="contracts"} onClick={() => setTab("contracts")}>Mes contrats {contracts?.length ? `(${contracts.length})` : ""}</TabBtn>
+            <TabBtn active={tab==="contracts"} onClick={() => setTab("contracts")}>Contrats relais {contracts?.length ? `(${contracts.length})` : ""}</TabBtn>
+            <TabBtn active={tab==="franchises"} onClick={() => setTab("franchises")}>Franchises La Graine {franchises?.length ? `(${franchises.length})` : ""}</TabBtn>
           </div>
+
 
           {tab === "deliveries" && (
             <div className="divide-y divide-border">
@@ -140,7 +203,11 @@ function Dashboard() {
                     </div>
                     <Badge className={`${s.color} border`}><s.icon className="size-3 mr-1" />{s.label}</Badge>
                     <div className="font-bold text-primary">{Number(d.delivery_price).toLocaleString("fr-FR")} FCFA</div>
+                    {d.status === "delivered" && d.relay_point_id && !reviewedIds.has(d.id) && (
+                      <Button size="sm" variant="outline" onClick={() => setRatingDelivery(d)}><Star className="size-3 mr-1" />Noter</Button>
+                    )}
                   </div>
+
                 );
               })}
             </div>
@@ -186,6 +253,29 @@ function Dashboard() {
               ))}
             </div>
           )}
+
+          {tab === "franchises" && (
+            <div className="divide-y divide-border">
+              {!franchises?.length ? (
+                <EmptyState icon={Sprout} title="Aucun contrat franchise" desc="Vos contrats franchise La Graine apparaîtront ici après validation de votre candidature." cta={<Button asChild className="bg-gradient-primary"><Link to="/franchise">Postuler franchise</Link></Button>} />
+              ) : franchises.map((c: any) => (
+                <div key={c.id} className="p-5 flex flex-wrap items-center gap-4">
+                  <div className="size-12 rounded-xl bg-accent grid place-items-center text-bronze"><Sprout /></div>
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="font-semibold">{c.shop_name}</div>
+                    <div className="text-sm text-muted-foreground">N° {c.contract_number} · {c.city}, {c.neighborhood} · Quota {c.resupply_quota_pct}%</div>
+                  </div>
+                  {c.franchisee_signature ? (
+                    <Badge className="bg-success/20 text-success-foreground border-success/40 border">Signé</Badge>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setSigningFranchise(c)}><PenLine className="size-3 mr-1" />Signer</Button>
+                  )}
+                  <Button size="sm" className="bg-gradient-primary" onClick={() => downloadFranchise(c as FranchiseContractData)}><Download className="size-3 mr-1" />Télécharger</Button>
+                </div>
+              ))}
+            </div>
+          )}
+
         </div>
 
         <div className="mt-8 rounded-2xl bg-hero text-white p-8 flex flex-wrap items-center justify-between gap-6 shadow-elegant relative overflow-hidden">
@@ -215,6 +305,40 @@ function Dashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!signingFranchise} onOpenChange={(o) => !o && setSigningFranchise(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Signature contrat franchise La Graine</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">Signez le contrat franchise <strong>{signingFranchise?.contract_number}</strong> en saisissant votre nom complet.</p>
+          <Input placeholder="Votre nom complet" value={sigName} onChange={e => setSigName(e.target.value)} maxLength={80} />
+          <div className="p-4 rounded-lg bg-accent/40 border border-dashed text-center font-serif italic text-2xl text-primary">
+            {sigName || "Votre signature"}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSigningFranchise(null)}>Annuler</Button>
+            <Button className="bg-gradient-primary" onClick={signFranchise}>Signer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!ratingDelivery} onOpenChange={(o) => !o && setRatingDelivery(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Noter le point relais</DialogTitle></DialogHeader>
+          <div className="flex justify-center gap-2 py-2">
+            {[1,2,3,4,5].map(n => (
+              <button key={n} type="button" onClick={() => setRatingStars(n)}>
+                <Star className={`size-8 ${n <= ratingStars ? "fill-primary text-primary" : "text-muted-foreground"}`} />
+              </button>
+            ))}
+          </div>
+          <Textarea placeholder="Votre commentaire (optionnel)" value={ratingComment} onChange={e => setRatingComment(e.target.value)} maxLength={500} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRatingDelivery(null)}>Annuler</Button>
+            <Button className="bg-gradient-primary" onClick={submitRating}>Envoyer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
