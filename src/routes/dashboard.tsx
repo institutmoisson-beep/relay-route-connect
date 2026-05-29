@@ -253,6 +253,29 @@ function Dashboard() {
               ))}
             </div>
           )}
+
+          {tab === "franchises" && (
+            <div className="divide-y divide-border">
+              {!franchises?.length ? (
+                <EmptyState icon={Sprout} title="Aucun contrat franchise" desc="Vos contrats franchise La Graine apparaîtront ici après validation de votre candidature." cta={<Button asChild className="bg-gradient-primary"><Link to="/franchise">Postuler franchise</Link></Button>} />
+              ) : franchises.map((c: any) => (
+                <div key={c.id} className="p-5 flex flex-wrap items-center gap-4">
+                  <div className="size-12 rounded-xl bg-accent grid place-items-center text-bronze"><Sprout /></div>
+                  <div className="flex-1 min-w-[200px]">
+                    <div className="font-semibold">{c.shop_name}</div>
+                    <div className="text-sm text-muted-foreground">N° {c.contract_number} · {c.city}, {c.neighborhood} · Quota {c.resupply_quota_pct}%</div>
+                  </div>
+                  {c.franchisee_signature ? (
+                    <Badge className="bg-success/20 text-success-foreground border-success/40 border">Signé</Badge>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setSigningFranchise(c)}><PenLine className="size-3 mr-1" />Signer</Button>
+                  )}
+                  <Button size="sm" className="bg-gradient-primary" onClick={() => downloadFranchise(c as FranchiseContractData)}><Download className="size-3 mr-1" />Télécharger</Button>
+                </div>
+              ))}
+            </div>
+          )}
+
         </div>
 
         <div className="mt-8 rounded-2xl bg-hero text-white p-8 flex flex-wrap items-center justify-between gap-6 shadow-elegant relative overflow-hidden">
