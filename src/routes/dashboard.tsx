@@ -30,6 +30,8 @@ const STATUS_LABELS: Record<string, { label: string; icon: any; color: string }>
 function Dashboard() {
   const { user, profile, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+
   const [tab, setTab] = useState<"deliveries" | "recharges" | "contracts" | "franchises">("deliveries");
   const [signingContract, setSigningContract] = useState<any | null>(null);
   const [signingFranchise, setSigningFranchise] = useState<any | null>(null);
