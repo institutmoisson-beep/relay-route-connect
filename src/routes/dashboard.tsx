@@ -60,6 +60,18 @@ function Dashboard() {
     enabled: !!user,
     queryFn: async () => (await supabase.from("msn_contracts").select("*").eq("user_id", user!.id).order("created_at",{ascending:false})).data ?? [],
   });
+  const { data: franchises } = useQuery({
+    queryKey: ["franchise-contracts", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("graine_franchise_contracts").select("*").eq("user_id", user!.id).order("created_at",{ascending:false})).data ?? [],
+  });
+  const { data: myReviews } = useQuery({
+    queryKey: ["my-reviews", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("msn_relay_reviews").select("delivery_id").eq("user_id", user!.id)).data ?? [],
+  });
+  const reviewedIds = new Set((myReviews ?? []).map((r: any) => r.delivery_id));
+
 
   if (loading || !user) {
     return <div className="min-h-screen grid place-items-center">Chargement…</div>;
