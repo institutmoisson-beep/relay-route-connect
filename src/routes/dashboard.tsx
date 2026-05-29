@@ -203,7 +203,11 @@ function Dashboard() {
                     </div>
                     <Badge className={`${s.color} border`}><s.icon className="size-3 mr-1" />{s.label}</Badge>
                     <div className="font-bold text-primary">{Number(d.delivery_price).toLocaleString("fr-FR")} FCFA</div>
+                    {d.status === "delivered" && d.relay_point_id && !reviewedIds.has(d.id) && (
+                      <Button size="sm" variant="outline" onClick={() => setRatingDelivery(d)}><Star className="size-3 mr-1" />Noter</Button>
+                    )}
                   </div>
+
                 );
               })}
             </div>
