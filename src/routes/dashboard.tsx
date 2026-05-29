@@ -98,7 +98,47 @@ function Dashboard() {
     toast.success("Contrat signé !");
     setSigningContract(null); setSigName("");
     qc.invalidateQueries({ queryKey: ["contracts"] });
+    qc.invalidateQueries({ queryKey: ["contracts"] });
   };
+
+  const downloadFranchise = (c: FranchiseContractData) => {
+    const pdf = generateFranchiseContractPDF(c);
+    pdf.save(`Franchise-${c.contract_number}.pdf`);
+  };
+
+  const signFranchise = async () => {
+    if (!signingFranchise || sigName.trim().length < 2) { toast.error("Saisissez votre signature (nom)"); return; }
+    const { error } = await supabase.from("graine_franchise_contracts").update({
+      franchisee_signature: sigName.trim(),
+      franchisee_signed_at: new Date().toISOString(),
+    }).eq("id", signingFranchise.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Contrat franchise signé !");
+    setSigningFranchise(null); setSigName("");
+    qc.invalidateQueries({ queryKey: ["franchise-contracts"] });
+  };
+
+  const submitRating = async () => {
+    if (!ratingDelivery) return;
+    const { error } = await supabase.from("msn_relay_reviews").insert({
+      user_id: user!.id,
+      relay_point_id: ratingDelivery.relay_point_id,
+      delivery_id: ratingDelivery.id,
+      rating: ratingStars,
+      comment: ratingComment.trim() || null,
+    });
+    if (error) { toast.error(error.message); return; }
+    // Update relay aggregate
+    const { data: agg } = await supabase.from("msn_relay_reviews").select("rating").eq("relay_point_id", ratingDelivery.relay_point_id);
+    if (agg && agg.length) {
+      const avg = agg.reduce((s: number, r: any) => s + r.rating, 0) / agg.length;
+      await supabase.from("msn_relay_points").update({ rating: Number(avg.toFixed(2)), total_reviews: agg.length }).eq("id", ratingDelivery.relay_point_id);
+    }
+    toast.success("Merci pour votre avis !");
+    setRatingDelivery(null); setRatingStars(5); setRatingComment("");
+    qc.invalidateQueries({ queryKey: ["my-reviews"] });
+  };
+
 
   return (
     <div className="min-h-screen bg-muted/30">
