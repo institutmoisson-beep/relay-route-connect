@@ -50,17 +50,14 @@ function BecomeRelay() {
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setSubmitting(true);
 
-    const upload = async (file: File, kind: "id" | "space") => {
-      const path = `${user.id}/${kind}-${Date.now()}-${file.name}`;
-      const { error } = await supabase.storage.from("relay-applications").upload(path, file);
-      if (error) throw error;
-      return path;
-    };
     let id_photo_url = ""; let space_photo_url = "";
     try {
-      [id_photo_url, space_photo_url] = await Promise.all([upload(idPhoto, "id"), upload(spacePhoto, "space")]);
+      [id_photo_url, space_photo_url] = await Promise.all([
+        safeUpload("relay-applications", `${user.id}/id`, idPhoto),
+        safeUpload("relay-applications", `${user.id}/space`, spacePhoto),
+      ]);
     } catch (e: any) {
-      toast.error("Erreur d'upload: " + e.message); setSubmitting(false); return;
+      toast.error("Erreur d'upload: " + (e?.message || e)); setSubmitting(false); return;
     }
 
     const { error } = await supabase.from("msn_relay_applications").insert({
