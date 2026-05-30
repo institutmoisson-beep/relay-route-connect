@@ -12,6 +12,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { safeUpload } from "@/lib/storage-upload";
 
 export const Route = createFileRoute("/become-relay")({ component: BecomeRelay });
 
