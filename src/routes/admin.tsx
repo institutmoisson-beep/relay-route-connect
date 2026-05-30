@@ -569,32 +569,118 @@ function FranchisesPanel({ qc }: any) {
     queryKey: ["admin-franchises"],
     queryFn: async () => (await supabase.from("graine_franchise_applications").select("*").order("created_at",{ascending:false})).data ?? [],
   });
+  const { data: contracts } = useQuery({
+    queryKey: ["admin-franchise-contracts"],
+    queryFn: async () => (await supabase.from("graine_franchise_contracts").select("*").order("created_at",{ascending:false})).data ?? [],
+  });
+  const { data: users } = useQuery({
+    queryKey: ["admin-users-select"],
+    queryFn: async () => (await supabase.from("profiles").select("id, full_name, phone").order("created_at",{ascending:false}).limit(500)).data ?? [],
+  });
+  const [open, setOpen] = useState(false);
+  const [pickedUser, setPickedUser] = useState<string>("");
   const decide = async (id: string, status: "approved"|"rejected") => {
     const { error } = await supabase.from("graine_franchise_applications").update({ status }).eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(status === "approved" ? "Approuvée + contrat franchise généré" : "Rejetée");
     qc.invalidateQueries({ queryKey: ["admin-franchises"] });
+    qc.invalidateQueries({ queryKey: ["admin-franchise-contracts"] });
+  };
+  const create = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!pickedUser) return toast.error("Sélectionnez un utilisateur");
+    const f = new FormData(e.currentTarget);
+    const u = users?.find((x: any) => x.id === pickedUser);
+    const payload: any = {
+      user_id: pickedUser,
+      application_id: pickedUser, // pas d'application — on réutilise l'ID utilisateur (champ requis)
+      franchisee_name: u?.full_name || "Franchisé",
+      shop_name: String(f.get("shop_name") || "").trim(),
+      city: String(f.get("city") || "").trim(),
+      neighborhood: String(f.get("neighborhood") || "").trim(),
+      address: String(f.get("address") || "").trim(),
+      resupply_quota_pct: Number(f.get("resupply_quota_pct") || 80),
+    };
+    if (!payload.shop_name || !payload.city || !payload.neighborhood || !payload.address) return toast.error("Tous les champs sont requis");
+    const { error } = await supabase.from("graine_franchise_contracts").insert(payload);
+    if (error) return toast.error(error.message);
+    toast.success("Franchise créée — contrat généré");
+    setOpen(false); setPickedUser("");
+    qc.invalidateQueries({ queryKey: ["admin-franchise-contracts"] });
   };
   return (
-    <div className="space-y-2">
-      {!data?.length && <p className="text-sm text-muted-foreground">Aucune candidature franchise.</p>}
-      {data?.map(a => (
-        <div key={a.id} className="border rounded-xl p-4 flex flex-wrap items-start gap-3">
-          <div className="flex-1 min-w-[240px]">
-            <div className="font-bold">{a.shop_name} <span className="text-xs text-muted-foreground">· {a.shop_type}</span></div>
-            <div className="text-sm text-muted-foreground">{a.city}, {a.neighborhood} · {a.phone}</div>
-            <div className="text-xs text-muted-foreground">{a.selected_product_ids?.length || 0} produit(s) sélectionné(s)</div>
-            {a.description && <p className="text-sm mt-1 italic line-clamp-2">"{a.description}"</p>}
-          </div>
-          <Badge>{a.status}</Badge>
-          {a.status === "pending" && (
-            <div className="flex gap-2">
-              <Button size="sm" className="bg-success text-success-foreground" onClick={() => decide(a.id,"approved")}>Approuver</Button>
-              <Button size="sm" variant="destructive" onClick={() => decide(a.id,"rejected")}>Rejeter</Button>
+    <div className="space-y-4">
+      <div className="flex justify-between">
+        <p className="text-sm text-muted-foreground">Candidatures + franchises créées directement par l'administrateur.</p>
+        <Button size="sm" className="bg-gradient-primary" onClick={() => setOpen(true)}><Plus className="size-3 mr-1" />Créer une franchise</Button>
+      </div>
+
+      <div>
+        <h3 className="font-bold text-sm mb-2">Candidatures</h3>
+        {!data?.length && <p className="text-sm text-muted-foreground">Aucune candidature.</p>}
+        <div className="space-y-2">
+          {data?.map(a => (
+            <div key={a.id} className="border rounded-xl p-4 flex flex-wrap items-start gap-3">
+              <div className="flex-1 min-w-[240px]">
+                <div className="font-bold">{a.shop_name} <span className="text-xs text-muted-foreground">· {a.shop_type}</span></div>
+                <div className="text-sm text-muted-foreground">{a.city}, {a.neighborhood} · {a.phone}</div>
+                <div className="text-xs text-muted-foreground">{a.selected_product_ids?.length || 0} produit(s) sélectionné(s)</div>
+                {a.description && <p className="text-sm mt-1 italic line-clamp-2">"{a.description}"</p>}
+              </div>
+              <Badge>{a.status}</Badge>
+              {a.status === "pending" && (
+                <div className="flex gap-2">
+                  <Button size="sm" className="bg-success text-success-foreground" onClick={() => decide(a.id,"approved")}>Approuver</Button>
+                  <Button size="sm" variant="destructive" onClick={() => decide(a.id,"rejected")}>Rejeter</Button>
+                </div>
+              )}
             </div>
-          )}
+          ))}
         </div>
-      ))}
+      </div>
+
+      <div>
+        <h3 className="font-bold text-sm mb-2">Contrats actifs</h3>
+        {!contracts?.length && <p className="text-sm text-muted-foreground">Aucun contrat.</p>}
+        <div className="space-y-2">
+          {contracts?.map(c => (
+            <div key={c.id} className="border rounded-xl p-3 flex flex-wrap items-center gap-3">
+              <div className="flex-1 min-w-[240px]">
+                <div className="font-bold text-sm">{c.shop_name} <span className="text-xs text-muted-foreground">· {c.contract_number}</span></div>
+                <div className="text-xs text-muted-foreground">{c.franchisee_name} · {c.city}, {c.neighborhood} · {c.resupply_quota_pct}%</div>
+              </div>
+              {c.franchisee_signed_at ? <Badge className="bg-success/20 text-success border-success/40 border">Signé</Badge> : <Badge>En attente signature</Badge>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Créer une franchise La Graine</DialogTitle></DialogHeader>
+          <form onSubmit={create} className="space-y-3">
+            <div>
+              <Label>Franchisé (utilisateur)</Label>
+              <Select value={pickedUser} onValueChange={setPickedUser}>
+                <SelectTrigger><SelectValue placeholder="Choisir un utilisateur" /></SelectTrigger>
+                <SelectContent>
+                  {users?.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id}>{u.full_name || "Sans nom"} {u.phone ? `· ${u.phone}` : ""}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Nom de la boutique</Label><Input name="shop_name" required /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Ville</Label><Input name="city" required /></div>
+              <div><Label>Quartier</Label><Input name="neighborhood" required /></div>
+            </div>
+            <div><Label>Adresse</Label><Input name="address" required /></div>
+            <div><Label>Quota d'approvisionnement (%)</Label><Input name="resupply_quota_pct" type="number" min={0} max={100} defaultValue={80} /></div>
+            <DialogFooter><Button type="submit" className="bg-gradient-primary">Créer la franchise</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
