@@ -13,7 +13,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { compressImage } from "@/lib/image-compress";
+import { safeUpload } from "@/lib/storage-upload";
+
 import graineLogo from "@/assets/graine-logo.png";
 
 export const Route = createFileRoute("/franchise")({ component: FranchisePage });
@@ -63,20 +64,13 @@ function FranchisePage() {
     if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
     setSubmitting(true);
 
-    const upload = async (file: File, kind: string) => {
-      const compressed = await compressImage(file);
-      const path = `${user.id}/${kind}-${Date.now()}-${compressed.name}`;
-      const { error } = await supabase.storage.from("graine-applications").upload(path, compressed);
-      if (error) throw error;
-      return path;
-    };
     let owner_id_url: string | null = null;
     let shop_photo_url: string | null = null;
     try {
-      if (idPhoto) owner_id_url = await upload(idPhoto, "id");
-      if (shopPhoto) shop_photo_url = await upload(shopPhoto, "shop");
+      if (idPhoto) owner_id_url = await safeUpload("graine-applications", `${user.id}/id`, idPhoto);
+      if (shopPhoto) shop_photo_url = await safeUpload("graine-applications", `${user.id}/shop`, shopPhoto);
     } catch (e: any) {
-      toast.error("Upload échoué : " + e.message); setSubmitting(false); return;
+      toast.error("Upload échoué : " + (e?.message || e)); setSubmitting(false); return;
     }
 
     const { error } = await supabase.from("graine_franchise_applications").insert({
