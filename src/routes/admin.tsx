@@ -173,6 +173,7 @@ function RelaysPanel({ qc }: any) {
     queryKey: ["admin-relays"],
     queryFn: async () => (await supabase.from("msn_relay_points").select("*").order("created_at",{ascending:false})).data ?? [],
   });
+  const [open, setOpen] = useState(false);
   const toggle = async (id: string, blocked: boolean) => {
     const { error } = await supabase.from("msn_relay_points").update({ is_blocked: !blocked, status: !blocked ? "suspended" : "active" }).eq("id", id);
     if (error) return toast.error(error.message);
@@ -189,8 +190,32 @@ function RelaysPanel({ qc }: any) {
     if (error) return toast.error(error.message);
     toast.success("Niveau de confiance mis à jour"); qc.invalidateQueries({ queryKey: ["admin-relays"] });
   };
+  const create = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const f = new FormData(e.currentTarget);
+    const payload: any = {
+      name: String(f.get("name") || "").trim(),
+      space_type: f.get("space_type"),
+      country: String(f.get("country") || "Côte d'Ivoire").trim(),
+      city: String(f.get("city") || "").trim(),
+      neighborhood: String(f.get("neighborhood") || "").trim(),
+      address: String(f.get("address") || "").trim() || null,
+      phone: String(f.get("phone") || "").trim() || null,
+      trust_level: f.get("trust_level") || "standard",
+      status: "active",
+    };
+    if (!payload.name || !payload.city || !payload.neighborhood) return toast.error("Nom, ville et quartier requis");
+    const { error } = await supabase.from("msn_relay_points").insert(payload);
+    if (error) return toast.error(error.message);
+    toast.success("Point relais créé"); setOpen(false);
+    qc.invalidateQueries({ queryKey: ["admin-relays"] });
+  };
   return (
     <div className="space-y-2">
+      <div className="flex justify-between mb-2">
+        <p className="text-sm text-muted-foreground">Vous pouvez créer un point relais directement, sans candidature.</p>
+        <Button size="sm" className="bg-gradient-primary" onClick={() => setOpen(true)}><Plus className="size-3 mr-1" />Créer un relais</Button>
+      </div>
       {!data?.length && <p className="text-sm text-muted-foreground">Aucun relais.</p>}
       {data?.map(r => (
         <div key={r.id} className="border rounded-xl p-4 flex flex-wrap items-center gap-3">
@@ -212,6 +237,48 @@ function RelaysPanel({ qc }: any) {
           <Button size="sm" variant="ghost" onClick={() => del(r.id)}><Trash2 className="size-3" /></Button>
         </div>
       ))}
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Créer un point relais</DialogTitle></DialogHeader>
+          <form onSubmit={create} className="space-y-3">
+            <div><Label>Nom de l'espace</Label><Input name="name" required /></div>
+            <div>
+              <Label>Type</Label>
+              <Select name="space_type" defaultValue="shop">
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="shop">Boutique</SelectItem>
+                  <SelectItem value="restaurant">Restaurant</SelectItem>
+                  <SelectItem value="maquis">Maquis</SelectItem>
+                  <SelectItem value="establishment">Établissement</SelectItem>
+                  <SelectItem value="individual">Particulier</SelectItem>
+                  <SelectItem value="other">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Pays</Label><Input name="country" defaultValue="Côte d'Ivoire" /></div>
+              <div><Label>Ville</Label><Input name="city" required /></div>
+            </div>
+            <div><Label>Quartier</Label><Input name="neighborhood" required /></div>
+            <div><Label>Adresse</Label><Input name="address" /></div>
+            <div><Label>Téléphone</Label><Input name="phone" /></div>
+            <div>
+              <Label>Niveau de confiance</Label>
+              <Select name="trust_level" defaultValue="standard">
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="verified">Vérifié</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter><Button type="submit" className="bg-gradient-primary">Créer</Button></DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
