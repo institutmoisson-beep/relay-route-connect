@@ -333,19 +333,21 @@ function DeliveriesPanel() {
   const [q, setQ] = useState(""); const [from, setFrom] = useState(""); const [to, setTo] = useState(""); const [st, setSt] = useState("all");
   const { data } = useQuery({
     queryKey: ["admin-deliveries"],
-    queryFn: async () => (await supabase.from("msn_deliveries").select("*, msn_relay_points(name,city), profiles!msn_deliveries_user_id_fkey(full_name)").order("created_at",{ascending:false}).limit(500)).data ?? [],
+    queryFn: async () => (await supabase.from("msn_deliveries").select("*, msn_relay_points(name,city)").order("created_at",{ascending:false}).limit(500)).data ?? [],
   });
+  const { data: profiles } = useQuery({ queryKey:["admin-all-profiles"], queryFn: async () => (await supabase.from("profiles").select("id,full_name")).data ?? [] });
+  const pmap = new Map((profiles ?? []).map((p:any)=>[p.id, p.full_name]));
   const filtered = (data ?? []).filter((d: any) => {
     if (st !== "all" && d.status !== st) return false;
     if (from && new Date(d.created_at) < new Date(from)) return false;
     if (to) { const e = new Date(to); e.setDate(e.getDate()+1); if (new Date(d.created_at) >= e) return false; }
-    if (q) { const n = q.toLowerCase(); if (!`${d.provider_name} ${d.order_code ?? ""} ${d.msn_relay_points?.name ?? ""} ${d.msn_relay_points?.city ?? ""}`.toLowerCase().includes(n)) return false; }
+    if (q) { const n = q.toLowerCase(); if (!`${d.provider_name} ${d.order_code ?? ""} ${d.msn_relay_points?.name ?? ""} ${d.msn_relay_points?.city ?? ""} ${pmap.get(d.user_id) ?? ""}`.toLowerCase().includes(n)) return false; }
     return true;
   });
   return (
     <div className="space-y-3">
       <div className="grid sm:grid-cols-4 gap-2">
-        <Input placeholder="Recherche fournisseur, code, relais..." value={q} onChange={e=>setQ(e.target.value)} />
+        <Input placeholder="Recherche fournisseur, code, relais, client..." value={q} onChange={e=>setQ(e.target.value)} />
         <Input type="date" value={from} onChange={e=>setFrom(e.target.value)} />
         <Input type="date" value={to} onChange={e=>setTo(e.target.value)} />
         <Select value={st} onValueChange={setSt}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>
@@ -358,7 +360,7 @@ function DeliveriesPanel() {
         <div key={d.id} className="border rounded-xl p-4 flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[240px]">
             <div className="font-bold text-sm">{d.provider_name} {d.order_code && <span className="text-xs text-muted-foreground">· #{d.order_code}</span>}</div>
-            <div className="text-xs text-muted-foreground">Client: {d.profiles?.full_name ?? d.user_id.slice(0,8)} · {d.msn_relay_points?.name ?? "Sans relais"} · {d.estimated_distance_km} km · {Number(d.delivery_price).toLocaleString("fr-FR")} FCFA</div>
+            <div className="text-xs text-muted-foreground">Client: {pmap.get(d.user_id) ?? d.user_id.slice(0,8)} · {d.msn_relay_points?.name ?? "Sans relais"} · {d.estimated_distance_km} km · {Number(d.delivery_price).toLocaleString("fr-FR")} FCFA</div>
           </div>
           <Badge>{d.status}</Badge>
           <span className="text-xs text-muted-foreground">{new Date(d.created_at).toLocaleDateString("fr-FR")}</span>
@@ -374,10 +376,12 @@ function GlobalHistoryPanel() {
   const [target, setTarget] = useState("");
   const [from, setFrom] = useState(""); const [to, setTo] = useState("");
 
-  const { data: deliveries } = useQuery({ queryKey:["adm-h-del"], queryFn: async () => (await supabase.from("msn_deliveries").select("*, msn_relay_points(name,city,owner_id), profiles!msn_deliveries_user_id_fkey(full_name)").order("created_at",{ascending:false}).limit(1000)).data ?? [] });
-  const { data: recharges } = useQuery({ queryKey:["adm-h-rec"], queryFn: async () => (await supabase.from("msn_wallet_recharge_requests").select("*, profiles!msn_wallet_recharge_requests_user_id_fkey(full_name)").order("created_at",{ascending:false}).limit(1000)).data ?? [] });
+  const { data: deliveries } = useQuery({ queryKey:["adm-h-del"], queryFn: async () => (await supabase.from("msn_deliveries").select("*, msn_relay_points(name,city,owner_id)").order("created_at",{ascending:false}).limit(1000)).data ?? [] });
+  const { data: recharges } = useQuery({ queryKey:["adm-h-rec"], queryFn: async () => (await supabase.from("msn_wallet_recharge_requests").select("*").order("created_at",{ascending:false}).limit(1000)).data ?? [] });
   const { data: franchises } = useQuery({ queryKey:["adm-h-fr"], queryFn: async () => (await supabase.from("graine_franchise_contracts").select("*").order("created_at",{ascending:false})).data ?? [] });
   const { data: relays } = useQuery({ queryKey:["adm-h-relays"], queryFn: async () => (await supabase.from("msn_relay_points").select("id,name,owner_id,city")).data ?? [] });
+  const { data: profiles } = useQuery({ queryKey:["adm-h-profiles"], queryFn: async () => (await supabase.from("profiles").select("id,full_name")).data ?? [] });
+  const pmap = new Map((profiles ?? []).map((p:any)=>[p.id, p.full_name]));
 
   const inDate = (d:string) => {
     if (from && new Date(d) < new Date(from)) return false;
@@ -394,13 +398,13 @@ function GlobalHistoryPanel() {
 
   type R = { id:string; date:string; kind:string; title:string; sub:string; status:string; amount?:number; user_id?:string; relay_id?:string|null; franchise_id?:string };
   const rows: R[] = [];
-  (deliveries ?? []).forEach((d:any) => rows.push({ id:`d-${d.id}`, date:d.created_at, kind:"Livraison", title:`${d.provider_name} → ${d.msn_relay_points?.name ?? "?"}`, sub:`Client: ${d.profiles?.full_name ?? d.user_id.slice(0,8)} · ${d.estimated_distance_km} km`, status:d.status, amount:Number(d.delivery_price||0), user_id:d.user_id, relay_id:d.relay_point_id }));
-  (recharges ?? []).forEach((r:any) => rows.push({ id:`r-${r.id}`, date:r.created_at, kind:"Recharge", title:`${r.operator} · ${Number(r.amount).toLocaleString("fr-FR")} FCFA`, sub:`Client: ${r.profiles?.full_name ?? r.user_id.slice(0,8)} · TXN ${r.transaction_id}`, status:r.status, amount:Number(r.amount), user_id:r.user_id }));
+  (deliveries ?? []).forEach((d:any) => rows.push({ id:`d-${d.id}`, date:d.created_at, kind:"Livraison", title:`${d.provider_name} → ${d.msn_relay_points?.name ?? "?"}`, sub:`Client: ${pmap.get(d.user_id) ?? d.user_id.slice(0,8)} · ${d.estimated_distance_km} km`, status:d.status, amount:Number(d.delivery_price||0), user_id:d.user_id, relay_id:d.relay_point_id }));
+  (recharges ?? []).forEach((r:any) => rows.push({ id:`r-${r.id}`, date:r.created_at, kind:"Recharge", title:`${r.operator} · ${Number(r.amount).toLocaleString("fr-FR")} FCFA`, sub:`Client: ${pmap.get(r.user_id) ?? r.user_id.slice(0,8)} · TXN ${r.transaction_id}`, status:r.status, amount:Number(r.amount), user_id:r.user_id }));
   (franchises ?? []).forEach((f:any) => rows.push({ id:`f-${f.id}`, date:f.created_at, kind:"Franchise", title:`${f.shop_name} (${f.contract_number})`, sub:`${f.franchisee_name} · ${f.city}`, status:f.franchisee_signature ? "signé" : "non signé", user_id:f.user_id, franchise_id:f.id }));
 
   const filtered = rows.filter(r => inDate(r.date) && matchTarget(r)).sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime());
 
-  const users = Array.from(new Map([...deliveries??[], ...recharges??[]].map((x:any)=>[x.user_id, x.profiles?.full_name ?? x.user_id.slice(0,8)])).entries());
+  const users = Array.from(new Map([...(deliveries??[]), ...(recharges??[])].map((x:any)=>[x.user_id, pmap.get(x.user_id) ?? x.user_id.slice(0,8)])).entries());
   const franchiseOpts = (franchises ?? []).map((f:any)=>({id:f.id, name:`${f.shop_name} (${f.contract_number})`}));
 
   return (
