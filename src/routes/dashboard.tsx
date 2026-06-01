@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine, Star, Sprout } from "lucide-react";
+import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine, Star, Sprout, History } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -156,6 +156,7 @@ function Dashboard() {
               </Button>
             )}
             <Button asChild className="bg-gradient-primary shadow-glow"><Link to="/order"><Plus className="mr-1 size-4" />Nouvelle commande</Link></Button>
+            <Button asChild variant="outline"><Link to="/history"><History className="mr-1 size-4" />Historique</Link></Button>
             <Button asChild variant="outline"><Link to="/inbox"><Inbox className="mr-1 size-4" />Boîte canal</Link></Button>
             <Button asChild variant="outline"><Link to="/recharge"><Wallet className="mr-1 size-4" />Recharger</Link></Button>
           </div>
