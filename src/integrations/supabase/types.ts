@@ -322,6 +322,45 @@ export type Database = {
           },
         ]
       }
+      msn_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          kind: string
+          link_url: string | null
+          recipient_id: string
+          related_delivery_id: string | null
+          related_relay_id: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind: string
+          link_url?: string | null
+          recipient_id: string
+          related_delivery_id?: string | null
+          related_relay_id?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          kind?: string
+          link_url?: string | null
+          recipient_id?: string
+          related_delivery_id?: string | null
+          related_relay_id?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       msn_payment_services: {
         Row: {
           created_at: string
