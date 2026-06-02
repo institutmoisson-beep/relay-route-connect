@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VtcRouteImport } from './routes/vtc'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RelayPointsRouteImport } from './routes/relay-points'
 import { Route as RechargeRouteImport } from './routes/recharge'
@@ -22,6 +23,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VtcRoute = VtcRouteImport.update({
+  id: '/vtc',
+  path: '/vtc',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
   '/verify': typeof VerifyRoute
+  '/vtc': typeof VtcRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
   '/verify': typeof VerifyRoute
+  '/vtc': typeof VtcRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
   '/verify': typeof VerifyRoute
+  '/vtc': typeof VtcRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/recharge'
     | '/relay-points'
     | '/verify'
+    | '/vtc'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/recharge'
     | '/relay-points'
     | '/verify'
+    | '/vtc'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/recharge'
     | '/relay-points'
     | '/verify'
+    | '/vtc'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,10 +196,18 @@ export interface RootRouteChildren {
   RechargeRoute: typeof RechargeRoute
   RelayPointsRoute: typeof RelayPointsRoute
   VerifyRoute: typeof VerifyRoute
+  VtcRoute: typeof VtcRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vtc': {
+      id: '/vtc'
+      path: '/vtc'
+      fullPath: '/vtc'
+      preLoaderRoute: typeof VtcRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -288,7 +308,18 @@ const rootRouteChildren: RootRouteChildren = {
   RechargeRoute: RechargeRoute,
   RelayPointsRoute: RelayPointsRoute,
   VerifyRoute: VerifyRoute,
+  VtcRoute: VtcRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
