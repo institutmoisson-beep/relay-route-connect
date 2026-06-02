@@ -26,6 +26,8 @@ export function SiteHeader() {
           <Link to="/become-relay" className="hover:text-primary transition-colors">Devenir relais</Link>
           <Link to="/relay-points" className="hover:text-primary transition-colors">Points relais</Link>
           <Link to="/franchise" className="hover:text-primary transition-colors flex items-center gap-1"><Sprout className="size-4" />La Graine</Link>
+          <Link to="/vtc" className="hover:text-primary transition-colors flex items-center gap-1"><Sparkles className="size-4" />VTC</Link>
+          {user && <Link to="/verify" className="hover:text-primary transition-colors flex items-center gap-1"><ScanLine className="size-4" />Vérifier</Link>}
           {user && <Link to="/dashboard" className="hover:text-primary transition-colors">Tableau de bord</Link>}
           {user && <Link to="/inbox" className="hover:text-primary transition-colors flex items-center gap-1"><Inbox className="size-4" />Canal</Link>}
         </nav>
