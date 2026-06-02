@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Package, Menu, X, Shield, Inbox, Sprout } from "lucide-react";
+import { Package, Menu, X, Shield, Inbox, Sprout, ScanLine, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
