@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Shield, Send, CheckCircle2, XCircle, Image as ImageIcon, ExternalLink, Eye, Plus, Trash2, Ban, Unlock, Package, Sprout, CreditCard, Users, Store } from "lucide-react";
+import { Shield, Send, CheckCircle2, XCircle, Image as ImageIcon, ExternalLink, Eye, Plus, Trash2, Ban, Unlock, Package, Sprout, CreditCard, Users, Store, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
