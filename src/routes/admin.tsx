@@ -851,3 +851,114 @@ function BroadcastPanel({ userId, qc }: any) {
     </div>
   );
 }
+
+function VtcAdminPanel({ qc }: { qc: any }) {
+  const { data: drivers } = useQuery({
+    queryKey: ["admin-vtc-drivers"],
+    queryFn: async () => (await supabase.from("vtc_drivers").select("*").order("created_at",{ascending:false})).data ?? [],
+  });
+  const { data: settings } = useQuery({
+    queryKey: ["admin-vtc-settings"],
+    queryFn: async () => (await supabase.from("vtc_settings").select("*").order("vehicle_type")).data ?? [],
+  });
+  const { data: mods } = useQuery({
+    queryKey: ["admin-vtc-mods"],
+    queryFn: async () => (await supabase.from("vtc_pricing_modifiers").select("*").eq("id",1).maybeSingle()).data,
+  });
+
+  const approveDriver = async (id: string, approve: boolean) => {
+    await supabase.from("vtc_drivers").update({ is_approved: approve }).eq("id", id);
+    qc.invalidateQueries({ queryKey: ["admin-vtc-drivers"] });
+    toast.success(approve ? "Chauffeur approuvé" : "Approbation retirée");
+  };
+  const toggleBlock = async (id: string, blocked: boolean) => {
+    await supabase.from("vtc_drivers").update({ is_blocked: !blocked }).eq("id", id);
+    qc.invalidateQueries({ queryKey: ["admin-vtc-drivers"] });
+  };
+  const saveSetting = async (vtype: string, patch: any) => {
+    await supabase.from("vtc_settings").update({ ...patch, updated_at: new Date().toISOString() }).eq("vehicle_type", vtype as any);
+    qc.invalidateQueries({ queryKey: ["admin-vtc-settings"] });
+    toast.success("Tarifs mis à jour");
+  };
+  const saveMods = async (patch: any) => {
+    await supabase.from("vtc_pricing_modifiers").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", 1);
+    qc.invalidateQueries({ queryKey: ["admin-vtc-mods"] });
+    toast.success("Modificateurs enregistrés");
+  };
+
+  return (
+    <div className="space-y-8">
+      <section>
+        <h2 className="font-bold text-lg mb-3">Tarifs par véhicule</h2>
+        <div className="grid sm:grid-cols-2 gap-3">
+          {settings?.map((s: any) => (
+            <div key={s.vehicle_type} className="p-4 rounded-xl border border-border bg-card">
+              <div className="font-bold capitalize mb-2 flex items-center justify-between">
+                {s.vehicle_type}
+                <Switch checked={s.is_active} onCheckedChange={(v) => saveSetting(s.vehicle_type, { is_active: v })} />
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div><Label className="text-xs">Base</Label><Input type="number" defaultValue={s.base_price} onBlur={e => saveSetting(s.vehicle_type, { base_price: Number(e.target.value) })} /></div>
+                <div><Label className="text-xs">Prix/km</Label><Input type="number" defaultValue={s.price_per_km} onBlur={e => saveSetting(s.vehicle_type, { price_per_km: Number(e.target.value) })} /></div>
+                <div><Label className="text-xs">Prix/min</Label><Input type="number" defaultValue={s.price_per_min} onBlur={e => saveSetting(s.vehicle_type, { price_per_min: Number(e.target.value) })} /></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {mods && (
+        <section>
+          <h2 className="font-bold text-lg mb-3">Modificateurs dynamiques</h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              { key: "rain", label: "Pluie" },
+              { key: "rush", label: "Heure de pointe" },
+              { key: "holiday", label: "Jour férié" },
+              { key: "strike", label: "Grève" },
+            ].map(m => (
+              <div key={m.key} className="p-4 rounded-xl border border-border bg-card">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold">{m.label}</span>
+                  <Switch checked={mods[`${m.key}_active`]} onCheckedChange={(v) => saveMods({ [`${m.key}_active`]: v })} />
+                </div>
+                <Label className="text-xs">Coefficient</Label>
+                <Input type="number" step="0.05" defaultValue={mods[`${m.key}_mult`]} onBlur={e => saveMods({ [`${m.key}_mult`]: Number(e.target.value) })} />
+              </div>
+            ))}
+            <div className="p-4 rounded-xl border border-border bg-card">
+              <div className="font-semibold mb-2">Nuit (22h-6h) — toujours actif</div>
+              <Label className="text-xs">Coefficient</Label>
+              <Input type="number" step="0.05" defaultValue={mods.night_mult} onBlur={e => saveMods({ night_mult: Number(e.target.value) })} />
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section>
+        <h2 className="font-bold text-lg mb-3">Chauffeurs ({drivers?.length ?? 0})</h2>
+        <div className="space-y-2">
+          {!drivers?.length ? <p className="text-sm text-muted-foreground">Aucun chauffeur inscrit.</p> : drivers.map((d: any) => (
+            <div key={d.id} className="p-4 rounded-xl border border-border bg-card flex items-center gap-3 flex-wrap">
+              <div className="flex-1 min-w-[200px]">
+                <div className="font-semibold">{d.full_name} <Badge className="ml-2 capitalize">{d.vehicle_type}</Badge></div>
+                <div className="text-xs text-muted-foreground">{d.phone} · {d.vehicle_model || "—"} · {d.vehicle_plate || "—"}</div>
+                <div className="text-xs text-muted-foreground">{d.total_rides} courses · {Number(d.total_earnings).toLocaleString("fr-FR")} F · ★ {Number(d.rating).toFixed(1)}</div>
+              </div>
+              <Badge className={d.is_approved ? "bg-green-500/15 text-green-700 border-green-500/40 border" : "bg-amber-500/15 text-amber-700 border-amber-500/40 border"}>
+                {d.is_approved ? "Validé" : "En attente"}
+              </Badge>
+              {d.is_blocked && <Badge variant="destructive">Bloqué</Badge>}
+              <Button size="sm" variant={d.is_approved ? "outline" : "default"} onClick={() => approveDriver(d.id, !d.is_approved)} className={d.is_approved ? "" : "bg-gradient-primary"}>
+                {d.is_approved ? "Retirer" : "Approuver"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => toggleBlock(d.id, d.is_blocked)}>
+                {d.is_blocked ? <Unlock className="size-3" /> : <Ban className="size-3" />}
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
