@@ -10,7 +10,7 @@ type Profile = {
   is_blocked: boolean;
 };
 
-type Role = "user" | "admin" | "super_admin" | "relay_owner";
+type Role = "user" | "admin" | "super_admin" | "relay_owner" | "driver";
 
 type AuthCtx = {
   user: User | null;
