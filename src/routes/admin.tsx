@@ -79,6 +79,7 @@ function AdminPage() {
             {tab === "payments" && <PaymentServicesPanel qc={qc} />}
             {tab === "products" && <ProductsPanel qc={qc} />}
             {tab === "franchises" && <FranchisesPanel qc={qc} />}
+            {tab === "vtc" && <VtcAdminPanel qc={qc} />}
             {tab === "broadcast" && <BroadcastPanel userId={user.id} qc={qc} />}
           </div>
         </div>
