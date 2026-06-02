@@ -29,6 +29,7 @@ const TABS = [
   { k: "payments", l: "Services paiement", icon: CreditCard },
   { k: "products", l: "Produits Graine", icon: Sprout },
   { k: "franchises", l: "Franchises Graine", icon: Sprout },
+  { k: "vtc", l: "MSN VTC", icon: Sparkles },
   { k: "broadcast", l: "Diffusion", icon: Send },
 ];
 
