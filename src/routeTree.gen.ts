@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VtcDriverRouteImport } from './routes/vtc-driver'
 import { Route as VtcRouteImport } from './routes/vtc'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RelayPointsRouteImport } from './routes/relay-points'
@@ -23,6 +24,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VtcDriverRoute = VtcDriverRouteImport.update({
+  id: '/vtc-driver',
+  path: '/vtc-driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VtcRoute = VtcRouteImport.update({
   id: '/vtc',
   path: '/vtc',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/relay-points': typeof RelayPointsRoute
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
+  '/vtc-driver': typeof VtcDriverRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/relay-points': typeof RelayPointsRoute
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
+  '/vtc-driver': typeof VtcDriverRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/relay-points': typeof RelayPointsRoute
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
+  '/vtc-driver': typeof VtcDriverRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/relay-points'
     | '/verify'
     | '/vtc'
+    | '/vtc-driver'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/relay-points'
     | '/verify'
     | '/vtc'
+    | '/vtc-driver'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/relay-points'
     | '/verify'
     | '/vtc'
+    | '/vtc-driver'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,10 +209,18 @@ export interface RootRouteChildren {
   RelayPointsRoute: typeof RelayPointsRoute
   VerifyRoute: typeof VerifyRoute
   VtcRoute: typeof VtcRoute
+  VtcDriverRoute: typeof VtcDriverRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vtc-driver': {
+      id: '/vtc-driver'
+      path: '/vtc-driver'
+      fullPath: '/vtc-driver'
+      preLoaderRoute: typeof VtcDriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vtc': {
       id: '/vtc'
       path: '/vtc'
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   RelayPointsRoute: RelayPointsRoute,
   VerifyRoute: VerifyRoute,
   VtcRoute: VtcRoute,
+  VtcDriverRoute: VtcDriverRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
