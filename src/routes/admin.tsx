@@ -920,10 +920,10 @@ function VtcAdminPanel({ qc }: { qc: any }) {
               <div key={m.key} className="p-4 rounded-xl border border-border bg-card">
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold">{m.label}</span>
-                  <Switch checked={mods[`${m.key}_active`]} onCheckedChange={(v) => saveMods({ [`${m.key}_active`]: v })} />
+                  <Switch checked={(mods as any)[`${m.key}_active`]} onCheckedChange={(v) => saveMods({ [`${m.key}_active`]: v })} />
                 </div>
                 <Label className="text-xs">Coefficient</Label>
-                <Input type="number" step="0.05" defaultValue={mods[`${m.key}_mult`]} onBlur={e => saveMods({ [`${m.key}_mult`]: Number(e.target.value) })} />
+                <Input type="number" step="0.05" defaultValue={(mods as any)[`${m.key}_mult`]} onBlur={e => saveMods({ [`${m.key}_mult`]: Number(e.target.value) })} />
               </div>
             ))}
             <div className="p-4 rounded-xl border border-border bg-card">
