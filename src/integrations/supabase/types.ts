@@ -270,6 +270,7 @@ export type Database = {
           provider_phone: string | null
           relay_point_id: string | null
           status: Database["public"]["Enums"]["delivery_status"]
+          tracking_code: string | null
           user_id: string
         }
         Insert: {
@@ -290,6 +291,7 @@ export type Database = {
           provider_phone?: string | null
           relay_point_id?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
+          tracking_code?: string | null
           user_id: string
         }
         Update: {
@@ -310,6 +312,7 @@ export type Database = {
           provider_phone?: string | null
           relay_point_id?: string | null
           status?: Database["public"]["Enums"]["delivery_status"]
+          tracking_code?: string | null
           user_id?: string
         }
         Relationships: [
@@ -318,6 +321,44 @@ export type Database = {
             columns: ["relay_point_id"]
             isOneToOne: false
             referencedRelation: "msn_relay_points"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      msn_delivery_scans: {
+        Row: {
+          action: string
+          created_at: string
+          delivery_id: string
+          id: string
+          note: string | null
+          scanned_by: string
+          scanner_role: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          delivery_id: string
+          id?: string
+          note?: string | null
+          scanned_by: string
+          scanner_role: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          delivery_id?: string
+          id?: string
+          note?: string | null
+          scanned_by?: string
+          scanner_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "msn_delivery_scans_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "msn_deliveries"
             referencedColumns: ["id"]
           },
         ]
@@ -697,11 +738,233 @@ export type Database = {
         }
         Relationships: []
       }
+      vtc_drivers: {
+        Row: {
+          created_at: string
+          current_lat: number | null
+          current_lng: number | null
+          full_name: string
+          id: string
+          id_photo_url: string | null
+          is_approved: boolean
+          is_blocked: boolean
+          last_location_at: string | null
+          phone: string
+          rating: number
+          status: Database["public"]["Enums"]["vtc_driver_status"]
+          total_earnings: number
+          total_rides: number
+          user_id: string
+          vehicle_model: string | null
+          vehicle_photo_url: string | null
+          vehicle_plate: string | null
+          vehicle_type: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Insert: {
+          created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          full_name: string
+          id?: string
+          id_photo_url?: string | null
+          is_approved?: boolean
+          is_blocked?: boolean
+          last_location_at?: string | null
+          phone: string
+          rating?: number
+          status?: Database["public"]["Enums"]["vtc_driver_status"]
+          total_earnings?: number
+          total_rides?: number
+          user_id: string
+          vehicle_model?: string | null
+          vehicle_photo_url?: string | null
+          vehicle_plate?: string | null
+          vehicle_type: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Update: {
+          created_at?: string
+          current_lat?: number | null
+          current_lng?: number | null
+          full_name?: string
+          id?: string
+          id_photo_url?: string | null
+          is_approved?: boolean
+          is_blocked?: boolean
+          last_location_at?: string | null
+          phone?: string
+          rating?: number
+          status?: Database["public"]["Enums"]["vtc_driver_status"]
+          total_earnings?: number
+          total_rides?: number
+          user_id?: string
+          vehicle_model?: string | null
+          vehicle_photo_url?: string | null
+          vehicle_plate?: string | null
+          vehicle_type?: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Relationships: []
+      }
+      vtc_pricing_modifiers: {
+        Row: {
+          holiday_active: boolean
+          holiday_mult: number
+          id: number
+          night_mult: number
+          rain_active: boolean
+          rain_mult: number
+          rush_active: boolean
+          rush_mult: number
+          strike_active: boolean
+          strike_mult: number
+          updated_at: string
+        }
+        Insert: {
+          holiday_active?: boolean
+          holiday_mult?: number
+          id?: number
+          night_mult?: number
+          rain_active?: boolean
+          rain_mult?: number
+          rush_active?: boolean
+          rush_mult?: number
+          strike_active?: boolean
+          strike_mult?: number
+          updated_at?: string
+        }
+        Update: {
+          holiday_active?: boolean
+          holiday_mult?: number
+          id?: number
+          night_mult?: number
+          rain_active?: boolean
+          rain_mult?: number
+          rush_active?: boolean
+          rush_mult?: number
+          strike_active?: boolean
+          strike_mult?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      vtc_rides: {
+        Row: {
+          accepted_at: string | null
+          applied_modifiers: Json
+          base_price: number
+          cancel_reason: string | null
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          distance_km: number
+          driver_id: string | null
+          dropoff_address: string
+          dropoff_lat: number
+          dropoff_lng: number
+          duration_min: number
+          final_price: number
+          id: string
+          notes: string | null
+          pickup_address: string
+          pickup_lat: number
+          pickup_lng: number
+          ride_code: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["vtc_ride_status"]
+          vehicle_type: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          applied_modifiers?: Json
+          base_price: number
+          cancel_reason?: string | null
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          distance_km: number
+          driver_id?: string | null
+          dropoff_address: string
+          dropoff_lat: number
+          dropoff_lng: number
+          duration_min: number
+          final_price: number
+          id?: string
+          notes?: string | null
+          pickup_address: string
+          pickup_lat: number
+          pickup_lng: number
+          ride_code?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["vtc_ride_status"]
+          vehicle_type: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Update: {
+          accepted_at?: string | null
+          applied_modifiers?: Json
+          base_price?: number
+          cancel_reason?: string | null
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          distance_km?: number
+          driver_id?: string | null
+          dropoff_address?: string
+          dropoff_lat?: number
+          dropoff_lng?: number
+          duration_min?: number
+          final_price?: number
+          id?: string
+          notes?: string | null
+          pickup_address?: string
+          pickup_lat?: number
+          pickup_lng?: number
+          ride_code?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["vtc_ride_status"]
+          vehicle_type?: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vtc_rides_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "vtc_drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vtc_settings: {
+        Row: {
+          base_price: number
+          is_active: boolean
+          price_per_km: number
+          price_per_min: number
+          updated_at: string
+          vehicle_type: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Insert: {
+          base_price?: number
+          is_active?: boolean
+          price_per_km?: number
+          price_per_min?: number
+          updated_at?: string
+          vehicle_type: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Update: {
+          base_price?: number
+          is_active?: boolean
+          price_per_km?: number
+          price_per_min?: number
+          updated_at?: string
+          vehicle_type?: Database["public"]["Enums"]["vtc_vehicle_type"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_tracking_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -711,7 +974,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "relay_owner" | "user" | "super_admin"
+      app_role: "admin" | "relay_owner" | "user" | "super_admin" | "driver"
       application_status: "pending" | "approved" | "rejected"
       delivery_status:
         | "pending"
@@ -733,6 +996,14 @@ export type Database = {
         | "other"
       relay_status: "active" | "pending" | "suspended"
       trust_level: "standard" | "verified" | "premium"
+      vtc_driver_status: "hors_ligne" | "en_ligne" | "occupe"
+      vtc_ride_status:
+        | "en_attente"
+        | "accepte"
+        | "en_cours"
+        | "termine"
+        | "annule"
+      vtc_vehicle_type: "moto" | "voiture" | "tricycle" | "camion"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -860,7 +1131,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "relay_owner", "user", "super_admin"],
+      app_role: ["admin", "relay_owner", "user", "super_admin", "driver"],
       application_status: ["pending", "approved", "rejected"],
       delivery_status: [
         "pending",
@@ -884,6 +1155,15 @@ export const Constants = {
       ],
       relay_status: ["active", "pending", "suspended"],
       trust_level: ["standard", "verified", "premium"],
+      vtc_driver_status: ["hors_ligne", "en_ligne", "occupe"],
+      vtc_ride_status: [
+        "en_attente",
+        "accepte",
+        "en_cours",
+        "termine",
+        "annule",
+      ],
+      vtc_vehicle_type: ["moto", "voiture", "tricycle", "camion"],
     },
   },
 } as const
