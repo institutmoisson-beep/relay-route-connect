@@ -101,7 +101,7 @@ function VtcDriverPage() {
     else { toast.success("Course acceptée !"); refetchRides(); refetchDriver(); }
   };
 
-  const updateRideStatus = async (rideId: string, status: string) => {
+  const updateRideStatus = async (rideId: string, status: "accepte" | "en_cours" | "termine" | "annule") => {
     setWorking(true);
     await supabase.from("vtc_rides").update({ status }).eq("id", rideId);
     setWorking(false);
