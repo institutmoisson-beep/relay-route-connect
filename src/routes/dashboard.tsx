@@ -196,7 +196,12 @@ function Dashboard() {
                     <div className="size-12 rounded-xl bg-accent grid place-items-center text-bronze"><Package /></div>
                     <div className="flex-1 min-w-[200px]">
                       <div className="font-semibold">{d.provider_name}</div>
-                      <div className="text-sm text-muted-foreground">
+                      {d.tracking_code && (
+                        <div className="text-xs font-mono inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                          🔖 {d.tracking_code}
+                        </div>
+                      )}
+                      <div className="text-sm text-muted-foreground mt-1">
                         {d.order_code && <>Cmd #{d.order_code} · </>}
                         {(d as any).msn_relay_points ? `${(d as any).msn_relay_points.name} — ${(d as any).msn_relay_points.city}` : "Relais non sélectionné"}
                         {d.estimated_distance_km && <> · {d.estimated_distance_km} km</>}
