@@ -40,7 +40,7 @@ function VerifyPage() {
     const c = code.trim().toUpperCase();
     const { data, error } = await supabase
       .from("msn_deliveries")
-      .select("*, msn_relay_points(name, city, neighborhood, address, phone, owner_id), profiles!msn_deliveries_user_id_fkey(full_name, phone)")
+      .select("*, msn_relay_points(name, city, neighborhood, address, phone, owner_id)")
       .eq("tracking_code", c)
       .maybeSingle();
     setSearching(false);
@@ -49,7 +49,8 @@ function VerifyPage() {
       setDelivery(null);
       return;
     }
-    setDelivery(data);
+    const { data: prof } = await supabase.from("profiles").select("full_name, phone").eq("id", data.user_id).maybeSingle();
+    setDelivery({ ...data, profiles: prof });
   };
 
   const { data: scans, refetch: refetchScans } = useQuery({
