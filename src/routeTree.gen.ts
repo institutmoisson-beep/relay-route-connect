@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VtcHistoryRouteImport } from './routes/vtc-history'
 import { Route as VtcDriverRouteImport } from './routes/vtc-driver'
 import { Route as VtcRouteImport } from './routes/vtc'
 import { Route as VerifyRouteImport } from './routes/verify'
@@ -24,6 +25,11 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 
+const VtcHistoryRoute = VtcHistoryRouteImport.update({
+  id: '/vtc-history',
+  path: '/vtc-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VtcDriverRoute = VtcDriverRouteImport.update({
   id: '/vtc-driver',
   path: '/vtc-driver',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
+  '/vtc-history': typeof VtcHistoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
+  '/vtc-history': typeof VtcHistoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
+  '/vtc-history': typeof VtcHistoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/vtc'
     | '/vtc-driver'
+    | '/vtc-history'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/vtc'
     | '/vtc-driver'
+    | '/vtc-history'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/vtc'
     | '/vtc-driver'
+    | '/vtc-history'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,10 +222,18 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute
   VtcRoute: typeof VtcRoute
   VtcDriverRoute: typeof VtcDriverRoute
+  VtcHistoryRoute: typeof VtcHistoryRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vtc-history': {
+      id: '/vtc-history'
+      path: '/vtc-history'
+      fullPath: '/vtc-history'
+      preLoaderRoute: typeof VtcHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vtc-driver': {
       id: '/vtc-driver'
       path: '/vtc-driver'
@@ -330,7 +350,18 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   VtcRoute: VtcRoute,
   VtcDriverRoute: VtcDriverRoute,
+  VtcHistoryRoute: VtcHistoryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
