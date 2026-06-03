@@ -16,9 +16,8 @@ import { getBrowserLocation } from "@/lib/geo";
 export const Route = createFileRoute("/vtc-driver")({ component: VtcDriverPage });
 
 function VtcDriverPage() {
-  const { user, loading, profile } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [registering, setRegistering] = useState(false);
   const [working, setWorking] = useState(false);
 
   useEffect(() => { if (!loading && !user) navigate({ to: "/auth", replace: true }); }, [user, loading, navigate]);
@@ -63,23 +62,30 @@ function VtcDriverPage() {
     return () => clearInterval(iv);
   }, [driver]);
 
-  const registerDriver = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Withdrawals
+  const { data: withdrawals, refetch: refetchW } = useQuery<any[]>({
+    queryKey: ["driver-withdrawals", driver?.id],
+    enabled: !!driver,
+    queryFn: async () => ((await (supabase as any).from("vtc_withdrawal_requests").select("*").eq("driver_id", driver!.id).order("created_at",{ascending:false})).data ?? []),
+  });
+  const [wOpen, setWOpen] = useState(false);
+  const submitWithdrawal = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) return;
-    setRegistering(true);
+    if (!driver || !user) return;
     const fd = new FormData(e.currentTarget);
-    const { error } = await supabase.from("vtc_drivers").insert({
+    const amount = Number(fd.get("amount"));
+    if (amount <= 0 || amount > Number(driver.total_earnings)) { toast.error("Montant invalide"); return; }
+    const { error } = await (supabase as any).from("vtc_withdrawal_requests").insert({
+      driver_id: driver.id,
       user_id: user.id,
-      full_name: String(fd.get("full_name") || profile?.full_name || ""),
-      phone: String(fd.get("phone") || profile?.phone || ""),
-      vehicle_type: fd.get("vehicle_type") as any,
-      vehicle_plate: String(fd.get("vehicle_plate") || ""),
-      vehicle_model: String(fd.get("vehicle_model") || ""),
+      amount,
+      operator: String(fd.get("operator") || "wave"),
+      recipient_number: String(fd.get("recipient_number") || ""),
+      recipient_name: String(fd.get("recipient_name") || ""),
     });
-    setRegistering(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Inscription envoyée ! En attente de validation par l'administrateur.");
-    refetchDriver();
+    toast.success("Demande de retrait envoyée");
+    setWOpen(false); refetchW();
   };
 
   const toggleStatus = async () => {
@@ -124,30 +130,11 @@ function VtcDriverPage() {
         </div>
 
         {!driver && (
-          <form onSubmit={registerDriver} className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4 text-center">
             <h2 className="font-bold text-lg">Devenir chauffeur MSN VTC</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div><Label>Nom complet *</Label><Input name="full_name" defaultValue={profile?.full_name || ""} required /></div>
-              <div><Label>Téléphone *</Label><Input name="phone" defaultValue={profile?.phone || ""} required /></div>
-              <div>
-                <Label>Type de véhicule *</Label>
-                <Select name="vehicle_type" defaultValue="moto">
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="moto">Moto</SelectItem>
-                    <SelectItem value="voiture">Voiture</SelectItem>
-                    <SelectItem value="tricycle">Tricycle</SelectItem>
-                    <SelectItem value="camion">Camion</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>Plaque d'immatriculation</Label><Input name="vehicle_plate" placeholder="2345-AB-01" /></div>
-              <div className="sm:col-span-2"><Label>Modèle du véhicule</Label><Input name="vehicle_model" placeholder="Yamaha YBR 125" /></div>
-            </div>
-            <Button disabled={registering} className="bg-gradient-primary w-full" type="submit">
-              {registering ? "..." : "Envoyer ma candidature"}
-            </Button>
-          </form>
+            <p className="text-sm text-muted-foreground">Soumettez votre candidature complète (documents, véhicule, permis) pour rejoindre la flotte.</p>
+            <Button asChild className="bg-gradient-primary"><Link to="/become-driver">Postuler maintenant</Link></Button>
+          </div>
         )}
 
         {driver && !driver.is_approved && (
@@ -215,9 +202,65 @@ function VtcDriverPage() {
               </div>
             )}
 
+            {/* Withdrawals */}
+            <div className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-soft">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h2 className="font-bold">Mes retraits</h2>
+                <Button size="sm" className="bg-gradient-primary" onClick={() => setWOpen(true)} disabled={Number(driver.total_earnings) <= 0}>
+                  <Wallet className="size-4 mr-1" />Demander un retrait
+                </Button>
+              </div>
+              {!withdrawals?.length ? (
+                <p className="text-sm text-muted-foreground">Aucune demande de retrait pour le moment.</p>
+              ) : (
+                <div className="divide-y divide-border">
+                  {withdrawals.map((w: any) => (
+                    <div key={w.id} className="py-3 flex items-center justify-between flex-wrap gap-2 text-sm">
+                      <div>
+                        <div className="font-semibold">{Number(w.amount).toLocaleString("fr-FR")} FCFA · {w.operator.toUpperCase()}</div>
+                        <div className="text-xs text-muted-foreground">{w.recipient_number} · {new Date(w.created_at).toLocaleDateString("fr-FR")}</div>
+                      </div>
+                      <Badge className={w.status === "paid" ? "bg-green-500/15 text-green-700 border-green-500/40 border" : w.status === "rejected" ? "bg-destructive/15 text-destructive border-destructive/40 border" : "bg-amber-500/15 text-amber-700 border-amber-500/40 border"}>
+                        {w.status === "paid" ? "Payé" : w.status === "rejected" ? "Refusé" : w.status === "approved" ? "Approuvé" : "En attente"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="mt-6 text-center">
               <Button asChild variant="ghost"><Link to="/vtc-history">Voir l'historique de mes courses</Link></Button>
             </div>
+
+            {wOpen && (
+              <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setWOpen(false)}>
+                <form onClick={e => e.stopPropagation()} onSubmit={submitWithdrawal} className="bg-card rounded-2xl p-6 max-w-md w-full space-y-3 border border-border shadow-elegant">
+                  <h3 className="font-bold text-lg">Demande de retrait</h3>
+                  <p className="text-xs text-muted-foreground">Disponible : {Number(driver.total_earnings).toLocaleString("fr-FR")} FCFA</p>
+                  <div><Label>Montant *</Label><Input type="number" name="amount" min={500} max={Number(driver.total_earnings)} required /></div>
+                  <div>
+                    <Label>Opérateur / Réseau *</Label>
+                    <Select name="operator" defaultValue="wave">
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="wave">Wave</SelectItem>
+                        <SelectItem value="orange">Orange Money</SelectItem>
+                        <SelectItem value="mtn">MTN Mobile Money</SelectItem>
+                        <SelectItem value="moov">Moov Money</SelectItem>
+                        <SelectItem value="banque">Virement bancaire</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Numéro / IBAN *</Label><Input name="recipient_number" required maxLength={40} /></div>
+                  <div><Label>Nom du bénéficiaire</Label><Input name="recipient_name" defaultValue={driver.full_name} maxLength={100} /></div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="outline" onClick={() => setWOpen(false)}>Annuler</Button>
+                    <Button type="submit" className="bg-gradient-primary">Envoyer</Button>
+                  </div>
+                </form>
+              </div>
+            )}
           </>
         )}
       </main>

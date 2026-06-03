@@ -16,14 +16,19 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as RelayPointsRouteImport } from './routes/relay-points'
 import { Route as RechargeRouteImport } from './routes/recharge'
 import { Route as OrderRouteImport } from './routes/order'
+import { Route as InvestDashboardRouteImport } from './routes/invest-dashboard'
+import { Route as InvestRouteImport } from './routes/invest'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as FranchiseRouteImport } from './routes/franchise'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as BecomeRelayRouteImport } from './routes/become-relay'
+import { Route as BecomeDriverRouteImport } from './routes/become-driver'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminExtrasRouteImport } from './routes/admin-extras'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as InvestIdRouteImport } from './routes/invest.$id'
 
 const VtcHistoryRoute = VtcHistoryRouteImport.update({
   id: '/vtc-history',
@@ -60,6 +65,16 @@ const OrderRoute = OrderRouteImport.update({
   path: '/order',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestDashboardRoute = InvestDashboardRouteImport.update({
+  id: '/invest-dashboard',
+  path: '/invest-dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvestRoute = InvestRouteImport.update({
+  id: '/invest',
+  path: '/invest',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InboxRoute = InboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -85,9 +100,19 @@ const BecomeRelayRoute = BecomeRelayRouteImport.update({
   path: '/become-relay',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BecomeDriverRoute = BecomeDriverRouteImport.update({
+  id: '/become-driver',
+  path: '/become-driver',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminExtrasRoute = AdminExtrasRouteImport.update({
+  id: '/admin-extras',
+  path: '/admin-extras',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -100,16 +125,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InvestIdRoute = InvestIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => InvestRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-extras': typeof AdminExtrasRoute
   '/auth': typeof AuthRoute
+  '/become-driver': typeof BecomeDriverRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
   '/franchise': typeof FranchiseRoute
   '/history': typeof HistoryRoute
   '/inbox': typeof InboxRoute
+  '/invest': typeof InvestRouteWithChildren
+  '/invest-dashboard': typeof InvestDashboardRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
@@ -117,16 +151,21 @@ export interface FileRoutesByFullPath {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/invest/$id': typeof InvestIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-extras': typeof AdminExtrasRoute
   '/auth': typeof AuthRoute
+  '/become-driver': typeof BecomeDriverRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
   '/franchise': typeof FranchiseRoute
   '/history': typeof HistoryRoute
   '/inbox': typeof InboxRoute
+  '/invest': typeof InvestRouteWithChildren
+  '/invest-dashboard': typeof InvestDashboardRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
@@ -134,17 +173,22 @@ export interface FileRoutesByTo {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/invest/$id': typeof InvestIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/admin-extras': typeof AdminExtrasRoute
   '/auth': typeof AuthRoute
+  '/become-driver': typeof BecomeDriverRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
   '/franchise': typeof FranchiseRoute
   '/history': typeof HistoryRoute
   '/inbox': typeof InboxRoute
+  '/invest': typeof InvestRouteWithChildren
+  '/invest-dashboard': typeof InvestDashboardRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
@@ -152,18 +196,23 @@ export interface FileRoutesById {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/invest/$id': typeof InvestIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/admin'
+    | '/admin-extras'
     | '/auth'
+    | '/become-driver'
     | '/become-relay'
     | '/dashboard'
     | '/franchise'
     | '/history'
     | '/inbox'
+    | '/invest'
+    | '/invest-dashboard'
     | '/order'
     | '/recharge'
     | '/relay-points'
@@ -171,16 +220,21 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/invest/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin'
+    | '/admin-extras'
     | '/auth'
+    | '/become-driver'
     | '/become-relay'
     | '/dashboard'
     | '/franchise'
     | '/history'
     | '/inbox'
+    | '/invest'
+    | '/invest-dashboard'
     | '/order'
     | '/recharge'
     | '/relay-points'
@@ -188,16 +242,21 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/invest/$id'
   id:
     | '__root__'
     | '/'
     | '/admin'
+    | '/admin-extras'
     | '/auth'
+    | '/become-driver'
     | '/become-relay'
     | '/dashboard'
     | '/franchise'
     | '/history'
     | '/inbox'
+    | '/invest'
+    | '/invest-dashboard'
     | '/order'
     | '/recharge'
     | '/relay-points'
@@ -205,17 +264,22 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/invest/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AdminExtrasRoute: typeof AdminExtrasRoute
   AuthRoute: typeof AuthRoute
+  BecomeDriverRoute: typeof BecomeDriverRoute
   BecomeRelayRoute: typeof BecomeRelayRoute
   DashboardRoute: typeof DashboardRoute
   FranchiseRoute: typeof FranchiseRoute
   HistoryRoute: typeof HistoryRoute
   InboxRoute: typeof InboxRoute
+  InvestRoute: typeof InvestRouteWithChildren
+  InvestDashboardRoute: typeof InvestDashboardRoute
   OrderRoute: typeof OrderRoute
   RechargeRoute: typeof RechargeRoute
   RelayPointsRoute: typeof RelayPointsRoute
@@ -276,6 +340,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invest-dashboard': {
+      id: '/invest-dashboard'
+      path: '/invest-dashboard'
+      fullPath: '/invest-dashboard'
+      preLoaderRoute: typeof InvestDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invest': {
+      id: '/invest'
+      path: '/invest'
+      fullPath: '/invest'
+      preLoaderRoute: typeof InvestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/inbox': {
       id: '/inbox'
       path: '/inbox'
@@ -311,11 +389,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BecomeRelayRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/become-driver': {
+      id: '/become-driver'
+      path: '/become-driver'
+      fullPath: '/become-driver'
+      preLoaderRoute: typeof BecomeDriverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-extras': {
+      id: '/admin-extras'
+      path: '/admin-extras'
+      fullPath: '/admin-extras'
+      preLoaderRoute: typeof AdminExtrasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -332,18 +424,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invest/$id': {
+      id: '/invest/$id'
+      path: '/$id'
+      fullPath: '/invest/$id'
+      preLoaderRoute: typeof InvestIdRouteImport
+      parentRoute: typeof InvestRoute
+    }
   }
 }
+
+interface InvestRouteChildren {
+  InvestIdRoute: typeof InvestIdRoute
+}
+
+const InvestRouteChildren: InvestRouteChildren = {
+  InvestIdRoute: InvestIdRoute,
+}
+
+const InvestRouteWithChildren =
+  InvestRoute._addFileChildren(InvestRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AdminExtrasRoute: AdminExtrasRoute,
   AuthRoute: AuthRoute,
+  BecomeDriverRoute: BecomeDriverRoute,
   BecomeRelayRoute: BecomeRelayRoute,
   DashboardRoute: DashboardRoute,
   FranchiseRoute: FranchiseRoute,
   HistoryRoute: HistoryRoute,
   InboxRoute: InboxRoute,
+  InvestRoute: InvestRouteWithChildren,
+  InvestDashboardRoute: InvestDashboardRoute,
   OrderRoute: OrderRoute,
   RechargeRoute: RechargeRoute,
   RelayPointsRoute: RelayPointsRoute,
@@ -355,13 +469,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
