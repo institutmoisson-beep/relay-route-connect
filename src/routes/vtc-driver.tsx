@@ -16,9 +16,8 @@ import { getBrowserLocation } from "@/lib/geo";
 export const Route = createFileRoute("/vtc-driver")({ component: VtcDriverPage });
 
 function VtcDriverPage() {
-  const { user, loading, profile } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [registering, setRegistering] = useState(false);
   const [working, setWorking] = useState(false);
 
   useEffect(() => { if (!loading && !user) navigate({ to: "/auth", replace: true }); }, [user, loading, navigate]);
