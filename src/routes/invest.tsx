@@ -17,11 +17,13 @@ const CAT_LABEL: Record<string, { label: string; icon: any; color: string }> = {
   autre: { label: "Autre", icon: TrendingUp, color: "bg-muted text-foreground border-border" },
 };
 
+const sb = supabase as any;
+
 function InvestHome() {
   const { user } = useAuth();
-  const { data: projects } = useQuery({
+  const { data: projects } = useQuery<any[]>({
     queryKey: ["crowd-projects"],
-    queryFn: async () => (await supabase.from("crowd_projects").select("*").in("status", ["open","funded"]).order("created_at",{ascending:false})).data ?? [],
+    queryFn: async () => (await sb.from("crowd_projects").select("*").in("status", ["open","funded"]).order("created_at",{ascending:false})).data ?? [],
   });
 
   return (

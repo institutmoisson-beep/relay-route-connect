@@ -16,6 +16,8 @@ import { MockPayment } from "@/components/mock-payment";
 
 export const Route = createFileRoute("/invest/$id")({ component: InvestDetail });
 
+const sb = supabase as any;
+
 function InvestDetail() {
   const { id } = Route.useParams();
   const { user, profile } = useAuth();
@@ -24,9 +26,9 @@ function InvestDetail() {
   const [investOpen, setInvestOpen] = useState(false);
   const [amount, setAmount] = useState<number>(10000);
 
-  const { data: project } = useQuery({
+  const { data: project } = useQuery<any>({
     queryKey: ["crowd-project", id],
-    queryFn: async () => (await supabase.from("crowd_projects").select("*").eq("id", id).maybeSingle()).data,
+    queryFn: async () => (await sb.from("crowd_projects").select("*").eq("id", id).maybeSingle()).data,
   });
 
   if (!project) {
@@ -46,7 +48,7 @@ function InvestDetail() {
 
   const confirmInvest = async (method: any, ref: string) => {
     if (!user) { navigate({ to: "/auth" }); return; }
-    const { error } = await supabase.from("crowd_investments").insert({
+    const { error } = await sb.from("crowd_investments").insert({
       user_id: user.id,
       project_id: project.id,
       amount,
@@ -56,7 +58,7 @@ function InvestDetail() {
     });
     if (error) { toast.error(error.message); return; }
     if (method === "wallet") {
-      await supabase.from("profiles").update({ wallet_balance: Number(profile?.wallet_balance ?? 0) - amount }).eq("id", user.id);
+      await sb.from("profiles").update({ wallet_balance: Number(profile?.wallet_balance ?? 0) - amount }).eq("id", user.id);
     }
     toast.success("Investissement enregistré !");
     qc.invalidateQueries({ queryKey: ["crowd-project", id] });

@@ -10,16 +10,18 @@ import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/invest-dashboard")({ component: InvestDashboard });
 
+const sb = supabase as any;
+
 function InvestDashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => { if (!loading && !user) navigate({ to: "/auth", replace: true }); }, [user, loading, navigate]);
 
-  const { data: investments } = useQuery({
+  const { data: investments } = useQuery<any[]>({
     queryKey: ["my-investments", user?.id],
     enabled: !!user,
-    queryFn: async () => (await supabase.from("crowd_investments").select("*, crowd_projects(title, category, image_url, roi_estimated, status)").eq("user_id", user!.id).order("investment_date",{ascending:false})).data ?? [],
+    queryFn: async () => (await sb.from("crowd_investments").select("*, crowd_projects(title, category, image_url, roi_estimated, status)").eq("user_id", user!.id).order("investment_date",{ascending:false})).data ?? [],
   });
 
   const stats = useMemo(() => {

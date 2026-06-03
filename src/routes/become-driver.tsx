@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { uploadFile } from "@/lib/storage-upload";
+import { safeUpload } from "@/lib/storage-upload";
+
+const sb = supabase as any;
 
 export const Route = createFileRoute("/become-driver")({ component: BecomeDriverPage });
 
@@ -21,10 +23,10 @@ function BecomeDriverPage() {
 
   useEffect(() => { if (!loading && !user) navigate({ to: "/auth", replace: true }); }, [user, loading, navigate]);
 
-  const { data: existing, refetch } = useQuery({
+  const { data: existing, refetch } = useQuery<any>({
     queryKey: ["my-driver-app", user?.id],
     enabled: !!user,
-    queryFn: async () => (await supabase.from("vtc_driver_applications").select("*").eq("user_id", user!.id).order("created_at",{ascending:false}).limit(1).maybeSingle()).data,
+    queryFn: async () => (await sb.from("vtc_driver_applications").select("*").eq("user_id", user!.id).order("created_at",{ascending:false}).limit(1).maybeSingle()).data,
   });
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -36,12 +38,12 @@ function BecomeDriverPage() {
       const upload = async (key: string): Promise<string | null> => {
         const f = fd.get(key) as File | null;
         if (!f || !f.size) return null;
-        return await uploadFile("vtc-applications", `${user.id}/${key}-${Date.now()}-${f.name}`, f);
+        return await safeUpload("vtc-applications", user.id, f);
       };
       const [vehicle_photo_url, id_recto_url, id_verso_url, license_url] = await Promise.all([
         upload("vehicle_photo"), upload("id_recto"), upload("id_verso"), upload("license"),
       ]);
-      const { error } = await supabase.from("vtc_driver_applications").insert({
+      const { error } = await sb.from("vtc_driver_applications").insert({
         user_id: user.id,
         full_name: String(fd.get("full_name") || ""),
         phone: String(fd.get("phone") || ""),

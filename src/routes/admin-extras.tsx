@@ -17,6 +17,8 @@ import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/admin-extras")({ component: AdminExtras });
 
+const sb = supabase as any;
+
 function AdminExtras() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
@@ -25,28 +27,28 @@ function AdminExtras() {
   useEffect(() => { if (!loading && (!user || !isAdmin)) navigate({ to: "/", replace: true }); }, [user, isAdmin, loading, navigate]);
 
   // Driver applications
-  const { data: driverApps } = useQuery({
+  const { data: driverApps } = useQuery<any[]>({
     queryKey: ["admin-driver-apps"],
     enabled: !!isAdmin,
-    queryFn: async () => (await supabase.from("vtc_driver_applications").select("*").order("created_at",{ascending:false})).data ?? [],
+    queryFn: async () => (await sb.from("vtc_driver_applications").select("*").order("created_at",{ascending:false})).data ?? [],
   });
 
   // Withdrawals
-  const { data: withdrawals } = useQuery({
+  const { data: withdrawals } = useQuery<any[]>({
     queryKey: ["admin-withdrawals"],
     enabled: !!isAdmin,
-    queryFn: async () => (await supabase.from("vtc_withdrawal_requests").select("*").order("created_at",{ascending:false})).data ?? [],
+    queryFn: async () => (await sb.from("vtc_withdrawal_requests").select("*").order("created_at",{ascending:false})).data ?? [],
   });
 
   // Crowd projects
-  const { data: projects } = useQuery({
+  const { data: projects } = useQuery<any[]>({
     queryKey: ["admin-crowd-projects"],
     enabled: !!isAdmin,
-    queryFn: async () => (await supabase.from("crowd_projects").select("*").order("created_at",{ascending:false})).data ?? [],
+    queryFn: async () => (await sb.from("crowd_projects").select("*").order("created_at",{ascending:false})).data ?? [],
   });
 
   // Users for direct driver creation
-  const { data: users } = useQuery({
+  const { data: users } = useQuery<any[]>({
     queryKey: ["admin-users-list"],
     enabled: !!isAdmin,
     queryFn: async () => (await supabase.from("profiles").select("id, full_name, phone").order("created_at",{ascending:false}).limit(200)).data ?? [],
@@ -59,7 +61,7 @@ function AdminExtras() {
 
   const decideApp = async (status: "approved" | "rejected") => {
     if (!reviewing) return;
-    const { error } = await supabase.from("vtc_driver_applications").update({ status, admin_notes: reviewNote || null }).eq("id", reviewing.id);
+    const { error } = await sb.from("vtc_driver_applications").update({ status, admin_notes: reviewNote || null }).eq("id", reviewing.id);
     if (error) { toast.error(error.message); return; }
     toast.success(status === "approved" ? "Candidature approuvée" : "Candidature refusée");
     setReviewing(null); setReviewNote("");
@@ -67,7 +69,7 @@ function AdminExtras() {
   };
 
   const decideWithdrawal = async (id: string, status: "approved" | "rejected" | "paid") => {
-    const { error } = await supabase.from("vtc_withdrawal_requests").update({ status }).eq("id", id);
+    const { error } = await sb.from("vtc_withdrawal_requests").update({ status }).eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Statut mis à jour");
     qc.invalidateQueries({ queryKey: ["admin-withdrawals"] });
@@ -78,18 +80,18 @@ function AdminExtras() {
     const fd = new FormData(e.currentTarget);
     const user_id = String(fd.get("user_id") || "");
     if (!user_id) { toast.error("Sélectionnez un utilisateur"); return; }
-    const { error } = await supabase.from("vtc_drivers").insert({
+    const { error } = await sb.from("vtc_drivers").insert({
       user_id,
       full_name: String(fd.get("full_name") || ""),
       phone: String(fd.get("phone") || ""),
-      vehicle_type: String(fd.get("vehicle_type") || "moto") as any,
+      vehicle_type: String(fd.get("vehicle_type") || "moto"),
       vehicle_plate: String(fd.get("vehicle_plate") || ""),
       vehicle_model: String(fd.get("vehicle_model") || ""),
       is_approved: true,
       status: "hors_ligne",
     });
     if (error) { toast.error(error.message); return; }
-    await supabase.from("user_roles").insert({ user_id, role: "driver" as any });
+    await sb.from("user_roles").insert({ user_id, role: "driver" });
     toast.success("Conducteur créé");
     setCreateDriverOpen(false);
   };
@@ -97,9 +99,9 @@ function AdminExtras() {
   const createProject = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    const { error } = await supabase.from("crowd_projects").insert({
+    const { error } = await sb.from("crowd_projects").insert({
       title: String(fd.get("title") || ""),
-      category: String(fd.get("category") || "cinema") as any,
+      category: String(fd.get("category") || "cinema"),
       description: String(fd.get("description") || ""),
       target_amount: Number(fd.get("target_amount") || 0),
       roi_estimated: Number(fd.get("roi_estimated") || 0),
@@ -117,13 +119,13 @@ function AdminExtras() {
 
   const deleteProject = async (id: string) => {
     if (!confirm("Supprimer ce projet ?")) return;
-    const { error } = await supabase.from("crowd_projects").delete().eq("id", id);
+    const { error } = await sb.from("crowd_projects").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     qc.invalidateQueries({ queryKey: ["admin-crowd-projects"] });
   };
 
   const setProjectStatus = async (id: string, status: string) => {
-    await supabase.from("crowd_projects").update({ status: status as any }).eq("id", id);
+    await sb.from("crowd_projects").update({ status }).eq("id", id);
     qc.invalidateQueries({ queryKey: ["admin-crowd-projects"] });
   };
 
