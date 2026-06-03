@@ -63,23 +63,30 @@ function VtcDriverPage() {
     return () => clearInterval(iv);
   }, [driver]);
 
-  const registerDriver = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Withdrawals
+  const { data: withdrawals, refetch: refetchW } = useQuery<any[]>({
+    queryKey: ["driver-withdrawals", driver?.id],
+    enabled: !!driver,
+    queryFn: async () => ((await (supabase as any).from("vtc_withdrawal_requests").select("*").eq("driver_id", driver!.id).order("created_at",{ascending:false})).data ?? []),
+  });
+  const [wOpen, setWOpen] = useState(false);
+  const submitWithdrawal = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) return;
-    setRegistering(true);
+    if (!driver || !user) return;
     const fd = new FormData(e.currentTarget);
-    const { error } = await supabase.from("vtc_drivers").insert({
+    const amount = Number(fd.get("amount"));
+    if (amount <= 0 || amount > Number(driver.total_earnings)) { toast.error("Montant invalide"); return; }
+    const { error } = await (supabase as any).from("vtc_withdrawal_requests").insert({
+      driver_id: driver.id,
       user_id: user.id,
-      full_name: String(fd.get("full_name") || profile?.full_name || ""),
-      phone: String(fd.get("phone") || profile?.phone || ""),
-      vehicle_type: fd.get("vehicle_type") as any,
-      vehicle_plate: String(fd.get("vehicle_plate") || ""),
-      vehicle_model: String(fd.get("vehicle_model") || ""),
+      amount,
+      operator: String(fd.get("operator") || "wave"),
+      recipient_number: String(fd.get("recipient_number") || ""),
+      recipient_name: String(fd.get("recipient_name") || ""),
     });
-    setRegistering(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Inscription envoyée ! En attente de validation par l'administrateur.");
-    refetchDriver();
+    toast.success("Demande de retrait envoyée");
+    setWOpen(false); refetchW();
   };
 
   const toggleStatus = async () => {
