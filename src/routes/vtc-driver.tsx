@@ -124,30 +124,11 @@ function VtcDriverPage() {
         </div>
 
         {!driver && (
-          <form onSubmit={registerDriver} className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-soft space-y-4 text-center">
             <h2 className="font-bold text-lg">Devenir chauffeur MSN VTC</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div><Label>Nom complet *</Label><Input name="full_name" defaultValue={profile?.full_name || ""} required /></div>
-              <div><Label>Téléphone *</Label><Input name="phone" defaultValue={profile?.phone || ""} required /></div>
-              <div>
-                <Label>Type de véhicule *</Label>
-                <Select name="vehicle_type" defaultValue="moto">
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="moto">Moto</SelectItem>
-                    <SelectItem value="voiture">Voiture</SelectItem>
-                    <SelectItem value="tricycle">Tricycle</SelectItem>
-                    <SelectItem value="camion">Camion</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>Plaque d'immatriculation</Label><Input name="vehicle_plate" placeholder="2345-AB-01" /></div>
-              <div className="sm:col-span-2"><Label>Modèle du véhicule</Label><Input name="vehicle_model" placeholder="Yamaha YBR 125" /></div>
-            </div>
-            <Button disabled={registering} className="bg-gradient-primary w-full" type="submit">
-              {registering ? "..." : "Envoyer ma candidature"}
-            </Button>
-          </form>
+            <p className="text-sm text-muted-foreground">Soumettez votre candidature complète (documents, véhicule, permis) pour rejoindre la flotte.</p>
+            <Button asChild className="bg-gradient-primary"><Link to="/become-driver">Postuler maintenant</Link></Button>
+          </div>
         )}
 
         {driver && !driver.is_approved && (

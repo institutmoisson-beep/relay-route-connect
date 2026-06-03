@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Bike, Car, Truck, MapPin, Loader2, Sparkles, Clock, Navigation, History, UserCog } from "lucide-react";
+import { Bike, Car, Truck, MapPin, Loader2, Sparkles, Clock, Navigation, History, UserCog, Wallet, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { geocode, getBrowserLocation, haversineKm } from "@/lib/geo";
+
+const sb = supabase as any;
 
 export const Route = createFileRoute("/vtc")({ component: VtcPage });
 
@@ -32,8 +34,9 @@ const RIDE_STATUS: Record<string, { label: string; color: string }> = {
 };
 
 function VtcPage() {
-  const { user, loading } = useAuth();
+  const { user, loading, profile } = useAuth();
   const navigate = useNavigate();
+  const [payMethod, setPayMethod] = useState<"wallet" | "cash">("cash");
   const [vehicleType, setVehicleType] = useState<VType>("moto");
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
@@ -120,7 +123,10 @@ function VtcPage() {
     if (mods?.strike_active) applied.strike = true;
     const hour = new Date().getHours();
     if (hour >= 22 || hour < 6) applied.night = true;
-    const { error } = await supabase.from("vtc_rides").insert({
+    if (payMethod === "wallet" && Number(profile?.wallet_balance ?? 0) < price) {
+      toast.error("Solde portefeuille insuffisant"); return;
+    }
+    const { error } = await sb.from("vtc_rides").insert({
       client_id: user.id,
       vehicle_type: vehicleType,
       pickup_address: pickup,
@@ -134,6 +140,7 @@ function VtcPage() {
       base_price: Number(setting!.base_price),
       final_price: price,
       applied_modifiers: applied,
+      payment_method: payMethod,
     });
     setSubmitting(false);
     if (error) { toast.error(error.message); return; }
@@ -235,6 +242,25 @@ function VtcPage() {
                 <span className="text-sm text-muted-foreground">Prix total</span>
                 <span className="text-3xl font-bold text-gradient">{price.toLocaleString("fr-FR")} FCFA</span>
               </div>
+
+              <div className="mt-4">
+                <Label className="mb-2 block">Mode de paiement</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={() => setPayMethod("wallet")}
+                    className={`p-3 rounded-xl border-2 text-left transition ${payMethod === "wallet" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                    <Wallet className="size-5 text-primary mb-1" />
+                    <div className="font-semibold text-sm">Portefeuille</div>
+                    <div className="text-[10px] text-muted-foreground">Solde: {Number(profile?.wallet_balance ?? 0).toLocaleString("fr-FR")} F</div>
+                  </button>
+                  <button type="button" onClick={() => setPayMethod("cash")}
+                    className={`p-3 rounded-xl border-2 text-left transition ${payMethod === "cash" ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"}`}>
+                    <Banknote className="size-5 text-primary mb-1" />
+                    <div className="font-semibold text-sm">Espèces</div>
+                    <div className="text-[10px] text-muted-foreground">Payer au chauffeur</div>
+                  </button>
+                </div>
+              </div>
+
               <Button disabled={submitting || !!activeRide} onClick={submit} className="w-full mt-4 bg-gradient-primary shadow-glow h-12">
                 {activeRide ? "Une course est déjà en cours" : submitting ? "..." : "Confirmer la course"}
               </Button>
