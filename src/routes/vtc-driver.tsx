@@ -203,9 +203,65 @@ function VtcDriverPage() {
               </div>
             )}
 
+            {/* Withdrawals */}
+            <div className="mt-6 bg-card border border-border rounded-2xl p-6 shadow-soft">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <h2 className="font-bold">Mes retraits</h2>
+                <Button size="sm" className="bg-gradient-primary" onClick={() => setWOpen(true)} disabled={Number(driver.total_earnings) <= 0}>
+                  <Wallet className="size-4 mr-1" />Demander un retrait
+                </Button>
+              </div>
+              {!withdrawals?.length ? (
+                <p className="text-sm text-muted-foreground">Aucune demande de retrait pour le moment.</p>
+              ) : (
+                <div className="divide-y divide-border">
+                  {withdrawals.map((w: any) => (
+                    <div key={w.id} className="py-3 flex items-center justify-between flex-wrap gap-2 text-sm">
+                      <div>
+                        <div className="font-semibold">{Number(w.amount).toLocaleString("fr-FR")} FCFA · {w.operator.toUpperCase()}</div>
+                        <div className="text-xs text-muted-foreground">{w.recipient_number} · {new Date(w.created_at).toLocaleDateString("fr-FR")}</div>
+                      </div>
+                      <Badge className={w.status === "paid" ? "bg-green-500/15 text-green-700 border-green-500/40 border" : w.status === "rejected" ? "bg-destructive/15 text-destructive border-destructive/40 border" : "bg-amber-500/15 text-amber-700 border-amber-500/40 border"}>
+                        {w.status === "paid" ? "Payé" : w.status === "rejected" ? "Refusé" : w.status === "approved" ? "Approuvé" : "En attente"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="mt-6 text-center">
               <Button asChild variant="ghost"><Link to="/vtc-history">Voir l'historique de mes courses</Link></Button>
             </div>
+
+            {wOpen && (
+              <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" onClick={() => setWOpen(false)}>
+                <form onClick={e => e.stopPropagation()} onSubmit={submitWithdrawal} className="bg-card rounded-2xl p-6 max-w-md w-full space-y-3 border border-border shadow-elegant">
+                  <h3 className="font-bold text-lg">Demande de retrait</h3>
+                  <p className="text-xs text-muted-foreground">Disponible : {Number(driver.total_earnings).toLocaleString("fr-FR")} FCFA</p>
+                  <div><Label>Montant *</Label><Input type="number" name="amount" min={500} max={Number(driver.total_earnings)} required /></div>
+                  <div>
+                    <Label>Opérateur / Réseau *</Label>
+                    <Select name="operator" defaultValue="wave">
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="wave">Wave</SelectItem>
+                        <SelectItem value="orange">Orange Money</SelectItem>
+                        <SelectItem value="mtn">MTN Mobile Money</SelectItem>
+                        <SelectItem value="moov">Moov Money</SelectItem>
+                        <SelectItem value="banque">Virement bancaire</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label>Numéro / IBAN *</Label><Input name="recipient_number" required maxLength={40} /></div>
+                  <div><Label>Nom du bénéficiaire</Label><Input name="recipient_name" defaultValue={driver.full_name} maxLength={100} /></div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button type="button" variant="outline" onClick={() => setWOpen(false)}>Annuler</Button>
+                    <Button type="submit" className="bg-gradient-primary">Envoyer</Button>
+                  </div>
+                </form>
+              </div>
+            )}
           </>
         )}
       </main>

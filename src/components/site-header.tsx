@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Package, Menu, X, Shield, Inbox, Sprout, ScanLine, Sparkles } from "lucide-react";
+import { Package, Menu, X, Shield, Inbox, Sprout, ScanLine, Sparkles, TrendingUp, Bike } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -27,6 +27,7 @@ export function SiteHeader() {
           <Link to="/relay-points" className="hover:text-primary transition-colors">Points relais</Link>
           <Link to="/franchise" className="hover:text-primary transition-colors flex items-center gap-1"><Sprout className="size-4" />La Graine</Link>
           <Link to="/vtc" className="hover:text-primary transition-colors flex items-center gap-1"><Sparkles className="size-4" />VTC</Link>
+          <Link to="/invest" className="hover:text-primary transition-colors flex items-center gap-1"><TrendingUp className="size-4" />Investir</Link>
           {user && <Link to="/verify" className="hover:text-primary transition-colors flex items-center gap-1"><ScanLine className="size-4" />Vérifier</Link>}
           {user && <Link to="/dashboard" className="hover:text-primary transition-colors">Tableau de bord</Link>}
           {user && <Link to="/inbox" className="hover:text-primary transition-colors flex items-center gap-1"><Inbox className="size-4" />Canal</Link>}
@@ -64,12 +65,15 @@ export function SiteHeader() {
             <Link to="/relay-points" onClick={() => setOpen(false)} className="py-2">Points relais</Link>
             <Link to="/franchise" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Sprout className="size-4" />La Graine</Link>
             <Link to="/vtc" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Sparkles className="size-4" />MSN VTC</Link>
+            <Link to="/become-driver" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Bike className="size-4" />Devenir conducteur</Link>
+            <Link to="/invest" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><TrendingUp className="size-4" />Investir</Link>
             {user && <Link to="/verify" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><ScanLine className="size-4" />Vérifier un colis</Link>}
             {user ? (
               <>
                 <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2">Tableau de bord</Link>
                 <Link to="/inbox" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Inbox className="size-4" />Boîte canal</Link>
                 {isAdmin && <Link to="/admin" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1 text-primary font-semibold"><Shield className="size-4" />Administration</Link>}
+                {isAdmin && <Link to="/admin-extras" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1 text-primary font-semibold"><Shield className="size-4" />Admin VTC & Invest</Link>}
                 <Button onClick={() => { signOut(); setOpen(false); }} variant="outline">Déconnexion</Button>
               </>
             ) : (
