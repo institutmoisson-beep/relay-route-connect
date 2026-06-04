@@ -143,7 +143,7 @@ function HistoryPage() {
             <p className="text-muted-foreground text-sm">Commandes, recharges, livraisons reçues (relais) et notifications internes.</p>
           </div>
           <div className="flex gap-2">
-            {isAdmin && <Button asChild variant="outline"><Link to="/admin">Admin global</Link></Button>}
+            {isAdmin && <Button asChild variant="outline"><Link to="/portal/$slug" params={{ slug: ADMIN_SLUG }}>Admin global</Link></Button>}
             <Button variant="outline" onClick={exportCsv}><Download className="size-4 mr-1" />Exporter CSV</Button>
           </div>
         </div>
