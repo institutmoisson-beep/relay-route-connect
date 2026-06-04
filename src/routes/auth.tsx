@@ -153,10 +153,13 @@ function AuthPage() {
 
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required /></div>
-                <div><Label htmlFor="password">Mot de passe</Label><Input id="password" name="password" type="password" required /></div>
+                <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" /></div>
+                <div><Label htmlFor="password">Mot de passe</Label><Input id="password" name="password" type="password" required autoComplete="current-password" /></div>
                 <MathCaptcha onValidChange={onCaptchaChange} />
-                <Button disabled={loading} className="w-full bg-gradient-primary h-11">{loading ? "..." : "Se connecter"}</Button>
+                {lockRemaining > 0 && (
+                  <p className="text-sm text-destructive text-center">Formulaire gelé — réessayez dans {lockRemaining}s.</p>
+                )}
+                <Button disabled={loading || lockRemaining > 0} className="w-full bg-gradient-primary h-11">{loading ? "..." : lockRemaining > 0 ? `Verrouillé (${lockRemaining}s)` : "Se connecter"}</Button>
               </form>
             </TabsContent>
 
