@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { generateContractPDF, type ContractData } from "@/lib/contract-pdf";
 import { generateFranchiseContractPDF, type FranchiseContractData } from "@/lib/franchise-pdf";
+import { ADMIN_SLUG } from "@/lib/admin-security";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
