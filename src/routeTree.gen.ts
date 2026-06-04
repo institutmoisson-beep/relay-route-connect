@@ -13,6 +13,7 @@ import { Route as VtcHistoryRouteImport } from './routes/vtc-history'
 import { Route as VtcDriverRouteImport } from './routes/vtc-driver'
 import { Route as VtcRouteImport } from './routes/vtc'
 import { Route as VerifyRouteImport } from './routes/verify'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RelayPointsRouteImport } from './routes/relay-points'
 import { Route as RechargeRouteImport } from './routes/recharge'
 import { Route as OrderRouteImport } from './routes/order'
@@ -45,6 +46,11 @@ const VtcRoute = VtcRouteImport.update({
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RelayPointsRoute = RelayPointsRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
@@ -144,6 +151,7 @@ export interface FileRoutesByTo {
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
   '/relay-points': typeof RelayPointsRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
     | '/order'
     | '/recharge'
     | '/relay-points'
+    | '/sitemap.xml'
     | '/verify'
     | '/vtc'
     | '/vtc-driver'
@@ -204,6 +214,7 @@ export interface FileRouteTypes {
     | '/order'
     | '/recharge'
     | '/relay-points'
+    | '/sitemap.xml'
     | '/verify'
     | '/vtc'
     | '/vtc-driver'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/order'
     | '/recharge'
     | '/relay-points'
+    | '/sitemap.xml'
     | '/verify'
     | '/vtc'
     | '/vtc-driver'
@@ -243,6 +255,7 @@ export interface RootRouteChildren {
   OrderRoute: typeof OrderRoute
   RechargeRoute: typeof RechargeRoute
   RelayPointsRoute: typeof RelayPointsRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VerifyRoute: typeof VerifyRoute
   VtcRoute: typeof VtcRoute
   VtcDriverRoute: typeof VtcDriverRoute
@@ -279,6 +292,13 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/verify'
       preLoaderRoute: typeof VerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/relay-points': {
@@ -387,6 +407,7 @@ const rootRouteChildren: RootRouteChildren = {
   OrderRoute: OrderRoute,
   RechargeRoute: RechargeRoute,
   RelayPointsRoute: RelayPointsRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   VerifyRoute: VerifyRoute,
   VtcRoute: VtcRoute,
   VtcDriverRoute: VtcDriverRoute,
