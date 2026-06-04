@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { compressImage } from "@/lib/image-compress";
 
-export const Route = createFileRoute("/admin")({ component: AdminPage });
+export const Route = createFileRoute("/portal/$slug")({ component: AdminPage });
 
 const TABS = [
   { k: "pricing", l: "Tarifs", icon: CreditCard },
