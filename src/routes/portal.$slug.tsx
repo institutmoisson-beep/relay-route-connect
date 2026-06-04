@@ -15,8 +15,22 @@ import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { compressImage } from "@/lib/image-compress";
+import { isValidAdminSlug, logAdminAction } from "@/lib/admin-security";
 
-export const Route = createFileRoute("/admin")({ component: AdminPage });
+export const Route = createFileRoute("/portal/$slug")({ component: AdminPage });
+
+function NotFoundShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-7xl font-bold text-gradient">404</h1>
+        <h2 className="mt-4 text-xl font-semibold">Page introuvable</h2>
+        <p className="mt-2 text-sm text-muted-foreground">Cette page n'existe pas ou a été déplacée.</p>
+        <a href="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 mt-6 text-sm font-medium text-primary-foreground hover:opacity-90">Retour à l'accueil</a>
+      </div>
+    </div>
+  );
+}
 
 const TABS = [
   { k: "pricing", l: "Tarifs", icon: CreditCard },
@@ -37,15 +51,21 @@ function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { slug } = Route.useParams();
+  const slugOk = isValidAdminSlug(slug);
   const [tab, setTab] = useState<string>("pricing");
 
+  // Bad slug → behave exactly like a missing page. No hint that an admin area exists.
   useEffect(() => {
+    if (!slugOk) return;
     if (!loading) {
       if (!user) navigate({ to: "/auth", replace: true });
-      else if (!isAdmin) navigate({ to: "/dashboard", replace: true });
+      else if (!isAdmin) navigate({ to: "/", replace: true });
+      else logAdminAction(user.id, "portal.open");
     }
-  }, [user, isAdmin, loading, navigate]);
+  }, [slugOk, user, isAdmin, loading, navigate]);
 
+  if (!slugOk) return <NotFoundShell />;
   if (loading || !user || !isAdmin) return <div className="min-h-screen grid place-items-center">Chargement…</div>;
 
   return (

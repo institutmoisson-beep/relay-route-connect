@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { generateContractPDF, type ContractData } from "@/lib/contract-pdf";
 import { generateFranchiseContractPDF, type FranchiseContractData } from "@/lib/franchise-pdf";
+import { ADMIN_SLUG } from "@/lib/admin-security";
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -152,7 +153,7 @@ function Dashboard() {
           <div className="flex gap-2 flex-wrap">
             {isAdmin && (
               <Button asChild size="lg" className="bg-gradient-bronze text-bronze-foreground shadow-elegant">
-                <Link to="/admin"><Shield className="mr-1 size-4" />Administration</Link>
+                <Link to="/portal/$slug" params={{ slug: ADMIN_SLUG }}><Shield className="mr-1 size-4" />Administration</Link>
               </Button>
             )}
             <Button asChild className="bg-gradient-primary shadow-glow"><Link to="/order"><Plus className="mr-1 size-4" />Nouvelle commande</Link></Button>

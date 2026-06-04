@@ -1,0 +1,18 @@
+User-agent: *
+Allow: /
+
+# Pages privées / administration : ne pas indexer
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /history
+Disallow: /inbox
+Disallow: /order
+Disallow: /recharge
+Disallow: /verify
+Disallow: /vtc-driver
+Disallow: /vtc-history
+Disallow: /become-driver
+Disallow: /portal/
+Disallow: /portal-extras/
+
+Sitemap: https://relay-route-connect.lovable.app/sitemap.xml

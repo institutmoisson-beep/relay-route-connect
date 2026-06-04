@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { purgeClientStorage } from "@/lib/admin-security";
 
 type Profile = {
   id: string;
@@ -69,6 +70,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Wipe any cached admin/user state on the device after sign-out.
+    purgeClientStorage();
   };
 
   const isAdmin = roles.includes("admin") || roles.includes("super_admin");

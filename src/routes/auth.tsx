@@ -26,27 +26,71 @@ const loginSchema = z.object({
   password: z.string().min(1, "Mot de passe requis"),
 });
 
+// Anti-bruteforce: gel local du formulaire après 5 essais ratés.
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS = 60_000;
+const STORAGE_KEY = "msn_auth_attempts";
+
+type AttemptsState = { count: number; lockedUntil: number };
+
+function readAttempts(): AttemptsState {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return { count: 0, lockedUntil: 0 };
+    return JSON.parse(raw) as AttemptsState;
+  } catch { return { count: 0, lockedUntil: 0 }; }
+}
+function writeAttempts(s: AttemptsState) {
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch { /* noop */ }
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [captchaOk, setCaptchaOk] = useState(false);
+  const [lockRemaining, setLockRemaining] = useState(0);
   const onCaptchaChange = useCallback((ok: boolean) => setCaptchaOk(ok), []);
 
   useEffect(() => {
     if (user) navigate({ to: "/dashboard", replace: true });
   }, [user, navigate]);
 
+  // Tick lockout timer
+  useEffect(() => {
+    const tick = () => {
+      const { lockedUntil } = readAttempts();
+      const remaining = Math.max(0, lockedUntil - Date.now());
+      setLockRemaining(Math.ceil(remaining / 1000));
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const state = readAttempts();
+    if (state.lockedUntil > Date.now()) {
+      toast.error("Trop de tentatives. Réessayez dans quelques instants.");
+      return;
+    }
     if (!captchaOk) { toast.error("Résolvez le défi anti-robot"); return; }
     const form = new FormData(e.currentTarget);
     const parsed = loginSchema.safeParse({ email: form.get("email"), password: form.get("password") });
-    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+    // Generic error: never reveal which field is wrong, never reveal account existence.
+    if (!parsed.success) { toast.error("Identifiants invalides"); return; }
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword(parsed.data);
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      const next: AttemptsState = { count: state.count + 1, lockedUntil: 0 };
+      if (next.count >= MAX_ATTEMPTS) { next.lockedUntil = Date.now() + LOCKOUT_MS; next.count = 0; }
+      writeAttempts(next);
+      toast.error("Identifiants invalides");
+      return;
+    }
+    writeAttempts({ count: 0, lockedUntil: 0 });
     toast.success("Bienvenue !");
   };
 
@@ -60,7 +104,7 @@ function AuthPage() {
       email: form.get("email"),
       password: form.get("password"),
     });
-    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+    if (!parsed.success) { toast.error("Informations invalides"); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
@@ -71,7 +115,8 @@ function AuthPage() {
       },
     });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    // Generic message — do not reveal whether the email is already taken.
+    if (error) { toast.error("Impossible de créer le compte"); return; }
     toast.success("Compte créé !");
   };
 
@@ -108,10 +153,13 @@ function AuthPage() {
 
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
-                <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required /></div>
-                <div><Label htmlFor="password">Mot de passe</Label><Input id="password" name="password" type="password" required /></div>
+                <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required autoComplete="email" /></div>
+                <div><Label htmlFor="password">Mot de passe</Label><Input id="password" name="password" type="password" required autoComplete="current-password" /></div>
                 <MathCaptcha onValidChange={onCaptchaChange} />
-                <Button disabled={loading} className="w-full bg-gradient-primary h-11">{loading ? "..." : "Se connecter"}</Button>
+                {lockRemaining > 0 && (
+                  <p className="text-sm text-destructive text-center">Formulaire gelé — réessayez dans {lockRemaining}s.</p>
+                )}
+                <Button disabled={loading || lockRemaining > 0} className="w-full bg-gradient-primary h-11">{loading ? "..." : lockRemaining > 0 ? `Verrouillé (${lockRemaining}s)` : "Se connecter"}</Button>
               </form>
             </TabsContent>
 

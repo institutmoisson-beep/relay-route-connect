@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          target_id: string | null
+          target_type: string | null
+          user_agent_hash: string | null
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent_hash?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent_hash?: string | null
+        }
+        Relationships: []
+      }
       graine_franchise_applications: {
         Row: {
           address: string

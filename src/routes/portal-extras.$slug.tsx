@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Shield, UserPlus, Check, X, Banknote, Briefcase, Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Shield, UserPlus, Check, X, Banknote, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,59 +10,70 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { isValidAdminSlug, logAdminAction } from "@/lib/admin-security";
 
-export const Route = createFileRoute("/admin-extras")({ component: AdminExtras });
+export const Route = createFileRoute("/portal-extras/$slug")({ component: AdminExtras });
 
 const sb = supabase as any;
+
+function NotFoundShell() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="max-w-md text-center">
+        <h1 className="text-7xl font-bold text-gradient">404</h1>
+        <h2 className="mt-4 text-xl font-semibold">Page introuvable</h2>
+        <a href="/" className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 mt-6 text-sm font-medium text-primary-foreground hover:opacity-90">Retour à l'accueil</a>
+      </div>
+    </div>
+  );
+}
 
 function AdminExtras() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { slug } = Route.useParams();
+  const slugOk = isValidAdminSlug(slug);
 
-  useEffect(() => { if (!loading && (!user || !isAdmin)) navigate({ to: "/", replace: true }); }, [user, isAdmin, loading, navigate]);
+  useEffect(() => {
+    if (!slugOk) return;
+    if (!loading) {
+      if (!user || !isAdmin) navigate({ to: "/", replace: true });
+      else logAdminAction(user.id, "portal-extras.open");
+    }
+  }, [slugOk, user, isAdmin, loading, navigate]);
 
-  // Driver applications
   const { data: driverApps } = useQuery<any[]>({
     queryKey: ["admin-driver-apps"],
-    enabled: !!isAdmin,
-    queryFn: async () => (await sb.from("vtc_driver_applications").select("*").order("created_at",{ascending:false})).data ?? [],
+    enabled: !!isAdmin && slugOk,
+    queryFn: async () => (await sb.from("vtc_driver_applications").select("*").order("created_at", { ascending: false })).data ?? [],
   });
 
-  // Withdrawals
   const { data: withdrawals } = useQuery<any[]>({
     queryKey: ["admin-withdrawals"],
-    enabled: !!isAdmin,
-    queryFn: async () => (await sb.from("vtc_withdrawal_requests").select("*").order("created_at",{ascending:false})).data ?? [],
+    enabled: !!isAdmin && slugOk,
+    queryFn: async () => (await sb.from("vtc_withdrawal_requests").select("*").order("created_at", { ascending: false })).data ?? [],
   });
 
-  // Crowd projects
-  const { data: projects } = useQuery<any[]>({
-    queryKey: ["admin-crowd-projects"],
-    enabled: !!isAdmin,
-    queryFn: async () => (await sb.from("crowd_projects").select("*").order("created_at",{ascending:false})).data ?? [],
-  });
-
-  // Users for direct driver creation
   const { data: users } = useQuery<any[]>({
     queryKey: ["admin-users-list"],
-    enabled: !!isAdmin,
-    queryFn: async () => (await supabase.from("profiles").select("id, full_name, phone").order("created_at",{ascending:false}).limit(200)).data ?? [],
+    enabled: !!isAdmin && slugOk,
+    queryFn: async () => (await supabase.from("profiles").select("id, full_name, phone").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
 
   const [reviewing, setReviewing] = useState<any | null>(null);
   const [reviewNote, setReviewNote] = useState("");
   const [createDriverOpen, setCreateDriverOpen] = useState(false);
-  const [newProjectOpen, setNewProjectOpen] = useState(false);
 
   const decideApp = async (status: "approved" | "rejected") => {
-    if (!reviewing) return;
+    if (!reviewing || !user) return;
     const { error } = await sb.from("vtc_driver_applications").update({ status, admin_notes: reviewNote || null }).eq("id", reviewing.id);
     if (error) { toast.error(error.message); return; }
+    await logAdminAction(user.id, `driver_app.${status}`, { type: "vtc_driver_application", id: reviewing.id });
     toast.success(status === "approved" ? "Candidature approuvée" : "Candidature refusée");
     setReviewing(null); setReviewNote("");
     qc.invalidateQueries({ queryKey: ["admin-driver-apps"] });
@@ -71,6 +82,7 @@ function AdminExtras() {
   const decideWithdrawal = async (id: string, status: "approved" | "rejected" | "paid") => {
     const { error } = await sb.from("vtc_withdrawal_requests").update({ status }).eq("id", id);
     if (error) { toast.error(error.message); return; }
+    if (user) await logAdminAction(user.id, `withdrawal.${status}`, { type: "vtc_withdrawal_request", id });
     toast.success("Statut mis à jour");
     qc.invalidateQueries({ queryKey: ["admin-withdrawals"] });
   };
@@ -92,55 +104,26 @@ function AdminExtras() {
     });
     if (error) { toast.error(error.message); return; }
     await sb.from("user_roles").insert({ user_id, role: "driver" });
+    if (user) await logAdminAction(user.id, "driver.created", { type: "vtc_driver", id: user_id });
     toast.success("Conducteur créé");
     setCreateDriverOpen(false);
   };
 
-  const createProject = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const { error } = await sb.from("crowd_projects").insert({
-      title: String(fd.get("title") || ""),
-      category: String(fd.get("category") || "cinema"),
-      description: String(fd.get("description") || ""),
-      target_amount: Number(fd.get("target_amount") || 0),
-      roi_estimated: Number(fd.get("roi_estimated") || 0),
-      min_investment: Number(fd.get("min_investment") || 5000),
-      duration_months: Number(fd.get("duration_months") || 12),
-      image_url: String(fd.get("image_url") || "") || null,
-      pitch_video_url: String(fd.get("pitch_video_url") || "") || null,
-      created_by: user!.id,
-    });
-    if (error) { toast.error(error.message); return; }
-    toast.success("Projet créé");
-    setNewProjectOpen(false);
-    qc.invalidateQueries({ queryKey: ["admin-crowd-projects"] });
-  };
-
-  const deleteProject = async (id: string) => {
-    if (!confirm("Supprimer ce projet ?")) return;
-    const { error } = await sb.from("crowd_projects").delete().eq("id", id);
-    if (error) { toast.error(error.message); return; }
-    qc.invalidateQueries({ queryKey: ["admin-crowd-projects"] });
-  };
-
-  const setProjectStatus = async (id: string, status: string) => {
-    await sb.from("crowd_projects").update({ status }).eq("id", id);
-    qc.invalidateQueries({ queryKey: ["admin-crowd-projects"] });
-  };
-
+  if (!slugOk) return <NotFoundShell />;
   if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen bg-muted/30">
       <SiteHeader />
       <main className="container mx-auto px-4 py-10 max-w-6xl">
-        <Button asChild variant="ghost" size="sm" className="mb-4"><Link to="/admin"><ArrowLeft className="size-4 mr-1" />Admin principal</Link></Button>
+        <Button asChild variant="ghost" size="sm" className="mb-4">
+          <Link to="/portal/$slug" params={{ slug }}><ArrowLeft className="size-4 mr-1" />Admin principal</Link>
+        </Button>
         <div className="flex items-center gap-3 mb-8">
           <div className="size-12 rounded-2xl bg-gradient-bronze grid place-items-center"><Shield className="size-6 text-bronze-foreground" /></div>
           <div>
             <h1 className="text-3xl font-display font-bold">Administration étendue</h1>
-            <p className="text-muted-foreground text-sm">Conducteurs, retraits & plateforme d'investissement.</p>
+            <p className="text-muted-foreground text-sm">Conducteurs & retraits VTC.</p>
           </div>
         </div>
 
@@ -148,10 +131,8 @@ function AdminExtras() {
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="drivers">Candidatures conducteur</TabsTrigger>
             <TabsTrigger value="withdrawals">Retraits</TabsTrigger>
-            <TabsTrigger value="projects">Projets Crowdequity</TabsTrigger>
           </TabsList>
 
-          {/* Driver applications */}
           <TabsContent value="drivers" className="space-y-3">
             <div className="flex justify-end">
               <Button onClick={() => setCreateDriverOpen(true)} className="bg-gradient-primary"><UserPlus className="size-4 mr-1" />Créer un conducteur</Button>
@@ -175,7 +156,6 @@ function AdminExtras() {
             ))}
           </TabsContent>
 
-          {/* Withdrawals */}
           <TabsContent value="withdrawals" className="space-y-3">
             {!withdrawals?.length ? <Empty>Aucun retrait demandé.</Empty> : withdrawals.map((w: any) => (
               <div key={w.id} className="bg-card border border-border rounded-xl p-4 flex flex-wrap gap-4 items-center shadow-soft">
@@ -194,33 +174,9 @@ function AdminExtras() {
               </div>
             ))}
           </TabsContent>
-
-          {/* Projects */}
-          <TabsContent value="projects" className="space-y-3">
-            <div className="flex justify-end">
-              <Button onClick={() => setNewProjectOpen(true)} className="bg-gradient-primary"><Plus className="size-4 mr-1" />Nouveau projet</Button>
-            </div>
-            {!projects?.length ? <Empty>Aucun projet.</Empty> : projects.map((p: any) => (
-              <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex flex-wrap gap-4 items-center shadow-soft">
-                <Briefcase className="size-5 text-primary" />
-                <div className="flex-1 min-w-[200px]">
-                  <div className="font-semibold">{p.title}</div>
-                  <div className="text-xs text-muted-foreground capitalize">{p.category} · {Number(p.raised_amount).toLocaleString("fr-FR")} / {Number(p.target_amount).toLocaleString("fr-FR")} F · ROI +{p.roi_estimated}%</div>
-                </div>
-                <Select value={p.status} onValueChange={(v) => setProjectStatus(p.id, v)}>
-                  <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {["draft","open","funded","closed","cancelled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Button size="icon" variant="outline" onClick={() => deleteProject(p.id)}><Trash2 className="size-4" /></Button>
-              </div>
-            ))}
-          </TabsContent>
         </Tabs>
       </main>
 
-      {/* Review driver app */}
       <Dialog open={!!reviewing} onOpenChange={(o) => !o && setReviewing(null)}>
         <DialogContent>
           <DialogHeader><DialogTitle>Candidature de {reviewing?.full_name}</DialogTitle></DialogHeader>
@@ -230,14 +186,13 @@ function AdminExtras() {
             <div>Véhicule : {reviewing?.vehicle_type} · {reviewing?.vehicle_model} · {reviewing?.vehicle_plate}</div>
             <Textarea placeholder="Note admin (optionnel)" value={reviewNote} onChange={e => setReviewNote(e.target.value)} maxLength={500} />
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 mt-2">
             <Button variant="outline" onClick={() => decideApp("rejected")}><X className="size-4 mr-1" />Refuser</Button>
             <Button className="bg-green-600 hover:bg-green-700" onClick={() => decideApp("approved")}><Check className="size-4 mr-1" />Approuver</Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Create driver directly */}
       <Dialog open={createDriverOpen} onOpenChange={setCreateDriverOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle>Créer un conducteur</DialogTitle></DialogHeader>
@@ -268,38 +223,6 @@ function AdminExtras() {
               <div className="col-span-2"><Label>Modèle</Label><Input name="vehicle_model" maxLength={80} /></div>
             </div>
             <Button type="submit" className="w-full bg-gradient-primary">Créer</Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* New project */}
-      <Dialog open={newProjectOpen} onOpenChange={setNewProjectOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Nouveau projet d'investissement</DialogTitle></DialogHeader>
-          <form onSubmit={createProject} className="space-y-3">
-            <div><Label>Titre *</Label><Input name="title" required maxLength={160} /></div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label>Catégorie</Label>
-                <Select name="category" defaultValue="cinema">
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cinema">Cinéma</SelectItem>
-                    <SelectItem value="agro">Agrobusiness</SelectItem>
-                    <SelectItem value="tech">Tech</SelectItem>
-                    <SelectItem value="autre">Autre</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label>Durée (mois)</Label><Input type="number" name="duration_months" defaultValue={12} min={1} /></div>
-              <div><Label>Objectif (FCFA) *</Label><Input type="number" name="target_amount" required min={1000} /></div>
-              <div><Label>Min. invest. (FCFA)</Label><Input type="number" name="min_investment" defaultValue={5000} min={500} /></div>
-              <div className="col-span-2"><Label>ROI estimé (%)</Label><Input type="number" name="roi_estimated" defaultValue={15} step="0.1" /></div>
-            </div>
-            <div><Label>URL image de couverture</Label><Input name="image_url" placeholder="https://…" /></div>
-            <div><Label>URL vidéo pitch</Label><Input name="pitch_video_url" placeholder="https://…" /></div>
-            <div><Label>Description / Pitch</Label><Textarea name="description" rows={5} maxLength={3000} /></div>
-            <Button type="submit" className="w-full bg-gradient-primary">Créer le projet</Button>
           </form>
         </DialogContent>
       </Dialog>
