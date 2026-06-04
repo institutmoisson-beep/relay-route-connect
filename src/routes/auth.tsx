@@ -104,7 +104,7 @@ function AuthPage() {
       email: form.get("email"),
       password: form.get("password"),
     });
-    if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+    if (!parsed.success) { toast.error("Informations invalides"); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email: parsed.data.email,
@@ -115,7 +115,8 @@ function AuthPage() {
       },
     });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    // Generic message — do not reveal whether the email is already taken.
+    if (error) { toast.error("Impossible de créer le compte"); return; }
     toast.success("Compte créé !");
   };
 
