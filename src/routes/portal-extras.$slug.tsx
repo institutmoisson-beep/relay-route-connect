@@ -15,7 +15,7 @@ import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
-export const Route = createFileRoute("/admin-extras")({ component: AdminExtras });
+export const Route = createFileRoute("/portal-extras/$slug")({ component: AdminExtras });
 
 const sb = supabase as any;
 
