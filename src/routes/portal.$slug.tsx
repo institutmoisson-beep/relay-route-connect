@@ -37,15 +37,21 @@ function AdminPage() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { slug } = Route.useParams();
+  const slugOk = isValidAdminSlug(slug);
   const [tab, setTab] = useState<string>("pricing");
 
+  // Bad slug → behave exactly like a missing page. No hint that an admin area exists.
   useEffect(() => {
+    if (!slugOk) return;
     if (!loading) {
       if (!user) navigate({ to: "/auth", replace: true });
-      else if (!isAdmin) navigate({ to: "/dashboard", replace: true });
+      else if (!isAdmin) navigate({ to: "/", replace: true });
+      else logAdminAction(user.id, "portal.open");
     }
-  }, [user, isAdmin, loading, navigate]);
+  }, [slugOk, user, isAdmin, loading, navigate]);
 
+  if (!slugOk) return <NotFoundShell />;
   if (loading || !user || !isAdmin) return <div className="min-h-screen grid place-items-center">Chargement…</div>;
 
   return (
