@@ -20,7 +20,7 @@ export const Route = createFileRoute("/become-driver")({ component: BecomeDriver
 function BecomeDriverPage() {
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
-  const [submitting, setSubmitting] = useState(false);
+  const [files, setFiles] = useState<Record<string, File | null>>({});
 
   useEffect(() => { if (!loading && !user) navigate({ to: "/auth", replace: true }); }, [user, loading, navigate]);
 
