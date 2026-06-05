@@ -78,7 +78,12 @@ function BecomeRelay() {
         <div className="text-xs text-muted-foreground truncate">{file?.name || "Cliquez pour sélectionner"}</div>
       </div>
       <Upload className="size-4 text-muted-foreground" />
-      <input type="file" accept="image/*" className="hidden" onChange={e => onSet(e.target.files?.[0] ?? null)} />
+      <input type="file" accept="image/*" className="hidden" onChange={async e => {
+        const raw = e.target.files?.[0] ?? null;
+        if (!raw) { onSet(null); return; }
+        try { onSet(await materializeFile(raw)); }
+        catch { toast.error("Impossible de lire le fichier sélectionné"); onSet(null); }
+      }} />
     </label>
   );
 
