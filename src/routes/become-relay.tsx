@@ -13,6 +13,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { safeUpload } from "@/lib/storage-upload";
+import { materializeFile } from "@/lib/image-compress";
 
 export const Route = createFileRoute("/become-relay")({ component: BecomeRelay });
 
