@@ -148,15 +148,32 @@ function BecomeDriverPage() {
   );
 }
 
-function FileField({ name, label }: { name: string; label: string }) {
-  const [file, setFile] = useState<File | null>(null);
+function FileField({ name, label, value, onChange }: { name: string; label: string; value: File | null | undefined; onChange: (f: File | null) => void }) {
+  const [busy, setBusy] = useState(false);
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
       <div className="mt-1 border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition cursor-pointer text-center">
         <Upload className="size-5 mx-auto text-muted-foreground mb-1" />
-        <span className="text-xs text-muted-foreground">{file ? file.name : "Choisir une image"}</span>
-        <input type="file" accept="image/*" name={name} className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+        <span className="text-xs text-muted-foreground">{busy ? "Préparation…" : (value ? value.name : "Choisir une image")}</span>
+        <input
+          type="file"
+          accept="image/*"
+          name={name}
+          className="hidden"
+          onChange={async (e) => {
+            const raw = e.target.files?.[0] || null;
+            if (!raw) { onChange(null); return; }
+            setBusy(true);
+            try {
+              const mat = await materializeFile(raw);
+              onChange(mat);
+            } catch {
+              toast.error("Impossible de lire le fichier sélectionné");
+              onChange(null);
+            } finally { setBusy(false); }
+          }}
+        />
       </div>
     </label>
   );
