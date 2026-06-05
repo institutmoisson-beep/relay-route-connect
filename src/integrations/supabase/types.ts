@@ -203,6 +203,249 @@ export type Database = {
         }
         Relationships: []
       }
+      graine_sale_items: {
+        Row: {
+          created_at: string
+          franchise_id: string
+          id: string
+          item_id: string | null
+          name_snapshot: string
+          qty: number
+          sale_id: string
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          franchise_id: string
+          id?: string
+          item_id?: string | null
+          name_snapshot: string
+          qty: number
+          sale_id: string
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          franchise_id?: string
+          id?: string
+          item_id?: string | null
+          name_snapshot?: string
+          qty?: number
+          sale_id?: string
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graine_sale_items_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "graine_franchise_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graine_sale_items_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "v_franchise_stock_kpis"
+            referencedColumns: ["franchise_id"]
+          },
+          {
+            foreignKeyName: "graine_sale_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "graine_stock_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graine_sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "graine_sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      graine_sales: {
+        Row: {
+          cashier_id: string | null
+          created_at: string
+          customer_phone: string | null
+          franchise_id: string
+          id: string
+          payment_method: string
+          receipt_code: string | null
+          total_amount: number
+        }
+        Insert: {
+          cashier_id?: string | null
+          created_at?: string
+          customer_phone?: string | null
+          franchise_id: string
+          id?: string
+          payment_method?: string
+          receipt_code?: string | null
+          total_amount?: number
+        }
+        Update: {
+          cashier_id?: string | null
+          created_at?: string
+          customer_phone?: string | null
+          franchise_id?: string
+          id?: string
+          payment_method?: string
+          receipt_code?: string | null
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graine_sales_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "graine_franchise_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graine_sales_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "v_franchise_stock_kpis"
+            referencedColumns: ["franchise_id"]
+          },
+        ]
+      }
+      graine_stock_items: {
+        Row: {
+          barcode: string | null
+          category: string | null
+          cost_price: number | null
+          created_at: string
+          created_by: string | null
+          franchise_id: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          low_stock_threshold: number
+          name: string
+          sell_price: number
+          sku: string | null
+          stock_qty: number
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          barcode?: string | null
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          created_by?: string | null
+          franchise_id: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          low_stock_threshold?: number
+          name: string
+          sell_price?: number
+          sku?: string | null
+          stock_qty?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string | null
+          category?: string | null
+          cost_price?: number | null
+          created_at?: string
+          created_by?: string | null
+          franchise_id?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          low_stock_threshold?: number
+          name?: string
+          sell_price?: number
+          sku?: string | null
+          stock_qty?: number
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graine_stock_items_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "graine_franchise_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graine_stock_items_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "v_franchise_stock_kpis"
+            referencedColumns: ["franchise_id"]
+          },
+        ]
+      }
+      graine_stock_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          franchise_id: string
+          id: string
+          item_id: string
+          kind: string
+          note: string | null
+          qty: number
+          unit_price: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          franchise_id: string
+          id?: string
+          item_id: string
+          kind: string
+          note?: string | null
+          qty: number
+          unit_price?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          franchise_id?: string
+          id?: string
+          item_id?: string
+          kind?: string
+          note?: string | null
+          qty?: number
+          unit_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "graine_stock_movements_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "graine_franchise_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "graine_stock_movements_franchise_id_fkey"
+            columns: ["franchise_id"]
+            isOneToOne: false
+            referencedRelation: "v_franchise_stock_kpis"
+            referencedColumns: ["franchise_id"]
+          },
+          {
+            foreignKeyName: "graine_stock_movements_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "graine_stock_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       msn_broadcasts: {
         Row: {
           author_id: string
@@ -997,7 +1240,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_franchise_stock_kpis: {
+        Row: {
+          city: string | null
+          franchise_id: string | null
+          items_count: number | null
+          low_stock_count: number | null
+          revenue_month: number | null
+          revenue_today: number | null
+          shop_name: string | null
+        }
+        Insert: {
+          city?: string | null
+          franchise_id?: string | null
+          items_count?: never
+          low_stock_count?: never
+          revenue_month?: never
+          revenue_today?: never
+          shop_name?: string | null
+        }
+        Update: {
+          city?: string | null
+          franchise_id?: string | null
+          items_count?: never
+          low_stock_count?: never
+          revenue_month?: never
+          revenue_today?: never
+          shop_name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       generate_tracking_code: { Args: never; Returns: string }
@@ -1008,6 +1280,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_franchise_ids: { Args: { _uid: string }; Returns: string[] }
     }
     Enums: {
       app_role: "admin" | "relay_owner" | "user" | "super_admin" | "driver"

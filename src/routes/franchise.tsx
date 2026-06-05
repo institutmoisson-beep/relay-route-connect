@@ -44,6 +44,12 @@ function FranchisePage() {
     queryFn: async () => (await supabase.from("graine_products").select("*").eq("is_active", true).order("created_at",{ascending:false})).data ?? [],
   });
 
+  const { data: myContract } = useQuery({
+    queryKey: ["my-franchise-contract", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("graine_franchise_contracts").select("id, shop_name, city").eq("user_id", user!.id).maybeSingle()).data,
+  });
+
   const toggle = (id: string) => setSelectedIds(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -89,6 +95,21 @@ function FranchisePage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
+
+      {myContract && (
+        <div className="bg-primary/10 border-b border-primary/30">
+          <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm">
+              <span className="font-semibold">{myContract.shop_name}</span> · {myContract.city} — Espace franchisé
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button asChild size="sm" variant="outline"><Link to="/franchise/stock">Stock</Link></Button>
+              <Button asChild size="sm" variant="outline"><Link to="/franchise/pos">Caisse</Link></Button>
+              <Button asChild size="sm" className="bg-gradient-primary"><Link to="/franchise/sales">Ventes</Link></Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-hero text-white py-20">

@@ -27,6 +27,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortalSlugRouteImport } from './routes/portal.$slug'
 import { Route as PortalExtrasSlugRouteImport } from './routes/portal-extras.$slug'
+import { Route as FranchiseStockRouteImport } from './routes/franchise.stock'
+import { Route as FranchiseSalesRouteImport } from './routes/franchise.sales'
+import { Route as FranchisePosRouteImport } from './routes/franchise.pos'
 
 const VtcHistoryRoute = VtcHistoryRouteImport.update({
   id: '/vtc-history',
@@ -118,6 +121,21 @@ const PortalExtrasSlugRoute = PortalExtrasSlugRouteImport.update({
   path: '/portal-extras/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FranchiseStockRoute = FranchiseStockRouteImport.update({
+  id: '/stock',
+  path: '/stock',
+  getParentRoute: () => FranchiseRoute,
+} as any)
+const FranchiseSalesRoute = FranchiseSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => FranchiseRoute,
+} as any)
+const FranchisePosRoute = FranchisePosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => FranchiseRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -125,7 +143,7 @@ export interface FileRoutesByFullPath {
   '/become-driver': typeof BecomeDriverRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
-  '/franchise': typeof FranchiseRoute
+  '/franchise': typeof FranchiseRouteWithChildren
   '/history': typeof HistoryRoute
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
@@ -136,6 +154,9 @@ export interface FileRoutesByFullPath {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/franchise/pos': typeof FranchisePosRoute
+  '/franchise/sales': typeof FranchiseSalesRoute
+  '/franchise/stock': typeof FranchiseStockRoute
   '/portal-extras/$slug': typeof PortalExtrasSlugRoute
   '/portal/$slug': typeof PortalSlugRoute
 }
@@ -145,7 +166,7 @@ export interface FileRoutesByTo {
   '/become-driver': typeof BecomeDriverRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
-  '/franchise': typeof FranchiseRoute
+  '/franchise': typeof FranchiseRouteWithChildren
   '/history': typeof HistoryRoute
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
@@ -156,6 +177,9 @@ export interface FileRoutesByTo {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/franchise/pos': typeof FranchisePosRoute
+  '/franchise/sales': typeof FranchiseSalesRoute
+  '/franchise/stock': typeof FranchiseStockRoute
   '/portal-extras/$slug': typeof PortalExtrasSlugRoute
   '/portal/$slug': typeof PortalSlugRoute
 }
@@ -166,7 +190,7 @@ export interface FileRoutesById {
   '/become-driver': typeof BecomeDriverRoute
   '/become-relay': typeof BecomeRelayRoute
   '/dashboard': typeof DashboardRoute
-  '/franchise': typeof FranchiseRoute
+  '/franchise': typeof FranchiseRouteWithChildren
   '/history': typeof HistoryRoute
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
@@ -177,6 +201,9 @@ export interface FileRoutesById {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/franchise/pos': typeof FranchisePosRoute
+  '/franchise/sales': typeof FranchiseSalesRoute
+  '/franchise/stock': typeof FranchiseStockRoute
   '/portal-extras/$slug': typeof PortalExtrasSlugRoute
   '/portal/$slug': typeof PortalSlugRoute
 }
@@ -199,6 +226,9 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/franchise/pos'
+    | '/franchise/sales'
+    | '/franchise/stock'
     | '/portal-extras/$slug'
     | '/portal/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -219,6 +249,9 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/franchise/pos'
+    | '/franchise/sales'
+    | '/franchise/stock'
     | '/portal-extras/$slug'
     | '/portal/$slug'
   id:
@@ -239,6 +272,9 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/franchise/pos'
+    | '/franchise/sales'
+    | '/franchise/stock'
     | '/portal-extras/$slug'
     | '/portal/$slug'
   fileRoutesById: FileRoutesById
@@ -249,7 +285,7 @@ export interface RootRouteChildren {
   BecomeDriverRoute: typeof BecomeDriverRoute
   BecomeRelayRoute: typeof BecomeRelayRoute
   DashboardRoute: typeof DashboardRoute
-  FranchiseRoute: typeof FranchiseRoute
+  FranchiseRoute: typeof FranchiseRouteWithChildren
   HistoryRoute: typeof HistoryRoute
   InboxRoute: typeof InboxRoute
   OrderRoute: typeof OrderRoute
@@ -392,8 +428,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PortalExtrasSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/franchise/stock': {
+      id: '/franchise/stock'
+      path: '/stock'
+      fullPath: '/franchise/stock'
+      preLoaderRoute: typeof FranchiseStockRouteImport
+      parentRoute: typeof FranchiseRoute
+    }
+    '/franchise/sales': {
+      id: '/franchise/sales'
+      path: '/sales'
+      fullPath: '/franchise/sales'
+      preLoaderRoute: typeof FranchiseSalesRouteImport
+      parentRoute: typeof FranchiseRoute
+    }
+    '/franchise/pos': {
+      id: '/franchise/pos'
+      path: '/pos'
+      fullPath: '/franchise/pos'
+      preLoaderRoute: typeof FranchisePosRouteImport
+      parentRoute: typeof FranchiseRoute
+    }
   }
 }
+
+interface FranchiseRouteChildren {
+  FranchisePosRoute: typeof FranchisePosRoute
+  FranchiseSalesRoute: typeof FranchiseSalesRoute
+  FranchiseStockRoute: typeof FranchiseStockRoute
+}
+
+const FranchiseRouteChildren: FranchiseRouteChildren = {
+  FranchisePosRoute: FranchisePosRoute,
+  FranchiseSalesRoute: FranchiseSalesRoute,
+  FranchiseStockRoute: FranchiseStockRoute,
+}
+
+const FranchiseRouteWithChildren = FranchiseRoute._addFileChildren(
+  FranchiseRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -401,7 +474,7 @@ const rootRouteChildren: RootRouteChildren = {
   BecomeDriverRoute: BecomeDriverRoute,
   BecomeRelayRoute: BecomeRelayRoute,
   DashboardRoute: DashboardRoute,
-  FranchiseRoute: FranchiseRoute,
+  FranchiseRoute: FranchiseRouteWithChildren,
   HistoryRoute: HistoryRoute,
   InboxRoute: InboxRoute,
   OrderRoute: OrderRoute,
