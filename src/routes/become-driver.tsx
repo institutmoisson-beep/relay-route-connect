@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { safeUpload } from "@/lib/storage-upload";
+import { materializeFile } from "@/lib/image-compress";
 
 const sb = supabase as any;
 
@@ -20,6 +21,7 @@ function BecomeDriverPage() {
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [files, setFiles] = useState<Record<string, File | null>>({});
 
   useEffect(() => { if (!loading && !user) navigate({ to: "/auth", replace: true }); }, [user, loading, navigate]);
 
@@ -36,9 +38,9 @@ function BecomeDriverPage() {
     const fd = new FormData(e.currentTarget);
     try {
       const upload = async (key: string): Promise<string | null> => {
-        const f = fd.get(key) as File | null;
+        const f = files[key];
         if (!f || !f.size) return null;
-        return await safeUpload("vtc-applications", user.id, f);
+        return await safeUpload("vtc-applications", user.id, f, { compress: false });
       };
       const [vehicle_photo_url, id_recto_url, id_verso_url, license_url] = await Promise.all([
         upload("vehicle_photo"), upload("id_recto"), upload("id_verso"), upload("license"),
@@ -130,10 +132,10 @@ function BecomeDriverPage() {
 
             <h2 className="font-bold text-lg pt-2">Documents (images)</h2>
             <div className="grid sm:grid-cols-2 gap-4">
-              <FileField name="vehicle_photo" label="Photo du véhicule" />
-              <FileField name="license" label="Permis de conduire" />
-              <FileField name="id_recto" label="Pièce d'identité — recto" />
-              <FileField name="id_verso" label="Pièce d'identité — verso" />
+              <FileField name="vehicle_photo" label="Photo du véhicule" value={files.vehicle_photo} onChange={(f) => setFiles(s => ({ ...s, vehicle_photo: f }))} />
+              <FileField name="license" label="Permis de conduire" value={files.license} onChange={(f) => setFiles(s => ({ ...s, license: f }))} />
+              <FileField name="id_recto" label="Pièce d'identité — recto" value={files.id_recto} onChange={(f) => setFiles(s => ({ ...s, id_recto: f }))} />
+              <FileField name="id_verso" label="Pièce d'identité — verso" value={files.id_verso} onChange={(f) => setFiles(s => ({ ...s, id_verso: f }))} />
             </div>
 
             <Button disabled={submitting} type="submit" className="w-full h-12 bg-gradient-primary shadow-glow">
@@ -146,15 +148,32 @@ function BecomeDriverPage() {
   );
 }
 
-function FileField({ name, label }: { name: string; label: string }) {
-  const [file, setFile] = useState<File | null>(null);
+function FileField({ name, label, value, onChange }: { name: string; label: string; value: File | null | undefined; onChange: (f: File | null) => void }) {
+  const [busy, setBusy] = useState(false);
   return (
     <label className="block">
       <span className="text-sm font-medium">{label}</span>
       <div className="mt-1 border-2 border-dashed border-border rounded-xl p-4 hover:border-primary/50 transition cursor-pointer text-center">
         <Upload className="size-5 mx-auto text-muted-foreground mb-1" />
-        <span className="text-xs text-muted-foreground">{file ? file.name : "Choisir une image"}</span>
-        <input type="file" accept="image/*" name={name} className="hidden" onChange={e => setFile(e.target.files?.[0] || null)} />
+        <span className="text-xs text-muted-foreground">{busy ? "Préparation…" : (value ? value.name : "Choisir une image")}</span>
+        <input
+          type="file"
+          accept="image/*"
+          name={name}
+          className="hidden"
+          onChange={async (e) => {
+            const raw = e.target.files?.[0] || null;
+            if (!raw) { onChange(null); return; }
+            setBusy(true);
+            try {
+              const mat = await materializeFile(raw);
+              onChange(mat);
+            } catch {
+              toast.error("Impossible de lire le fichier sélectionné");
+              onChange(null);
+            } finally { setBusy(false); }
+          }}
+        />
       </div>
     </label>
   );

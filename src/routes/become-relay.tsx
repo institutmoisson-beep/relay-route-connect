@@ -13,6 +13,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { safeUpload } from "@/lib/storage-upload";
+import { materializeFile } from "@/lib/image-compress";
 
 export const Route = createFileRoute("/become-relay")({ component: BecomeRelay });
 
@@ -53,8 +54,8 @@ function BecomeRelay() {
     let id_photo_url = ""; let space_photo_url = "";
     try {
       [id_photo_url, space_photo_url] = await Promise.all([
-        safeUpload("relay-applications", `${user.id}/id`, idPhoto),
-        safeUpload("relay-applications", `${user.id}/space`, spacePhoto),
+        safeUpload("relay-applications", `${user.id}/id`, idPhoto, { compress: false }),
+        safeUpload("relay-applications", `${user.id}/space`, spacePhoto, { compress: false }),
       ]);
     } catch (e: any) {
       toast.error("Erreur d'upload: " + (e?.message || e)); setSubmitting(false); return;
@@ -77,7 +78,12 @@ function BecomeRelay() {
         <div className="text-xs text-muted-foreground truncate">{file?.name || "Cliquez pour sélectionner"}</div>
       </div>
       <Upload className="size-4 text-muted-foreground" />
-      <input type="file" accept="image/*" className="hidden" onChange={e => onSet(e.target.files?.[0] ?? null)} />
+      <input type="file" accept="image/*" className="hidden" onChange={async e => {
+        const raw = e.target.files?.[0] ?? null;
+        if (!raw) { onSet(null); return; }
+        try { onSet(await materializeFile(raw)); }
+        catch { toast.error("Impossible de lire le fichier sélectionné"); onSet(null); }
+      }} />
     </label>
   );
 

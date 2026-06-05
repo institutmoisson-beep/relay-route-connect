@@ -25,3 +25,27 @@ export async function compressImage(
     return file;
   }
 }
+
+/**
+ * Lit immédiatement le contenu du fichier en mémoire (ArrayBuffer) et renvoie
+ * un nouveau File détaché du système de fichiers. Évite l'erreur Android
+ * "The requested file could not be read" lorsque la référence File devient
+ * invalide entre la sélection et le submit.
+ *
+ * Si c'est une image, on la compresse + convertit en WebP au passage afin
+ * d'optimiser systématiquement toute image uploadée dans l'application.
+ */
+export async function materializeFile(file: File): Promise<File> {
+  try {
+    if (file.type.startsWith("image/")) {
+      // compressImage lit déjà les octets via createImageBitmap → mémoire.
+      const compressed = await compressImage(file);
+      if (compressed !== file) return compressed;
+    }
+    const buf = await file.arrayBuffer();
+    return new File([buf], file.name, { type: file.type || "application/octet-stream" });
+  } catch {
+    // En dernier recours, on retourne la référence d'origine.
+    return file;
+  }
+}
