@@ -195,6 +195,84 @@ function AdminExtras() {
               </div>
             ))}
           </TabsContent>
+
+          <TabsContent value="franchises" className="space-y-4">
+            {/* KPIs consolidés */}
+            <div className="grid sm:grid-cols-3 gap-3">
+              <div className="bg-card border border-border rounded-xl p-4 shadow-soft">
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><Store className="size-3" /> Franchises</div>
+                <div className="text-2xl font-bold">{franchiseKpis?.length || 0}</div>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4 shadow-soft">
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><TrendingUp className="size-3" /> CA total (mois)</div>
+                <div className="text-2xl font-bold">{Number(franchiseKpis?.reduce((s, f) => s + Number(f.revenue_month || 0), 0) || 0).toLocaleString("fr-FR")} FCFA</div>
+              </div>
+              <div className="bg-card border border-border rounded-xl p-4 shadow-soft">
+                <div className="text-xs text-muted-foreground flex items-center gap-1"><AlertTriangle className="size-3" /> Alertes stock</div>
+                <div className="text-2xl font-bold text-destructive">{franchiseKpis?.reduce((s, f) => s + Number(f.low_stock_count || 0), 0) || 0}</div>
+              </div>
+            </div>
+
+            {/* Tableau franchises */}
+            <div className="bg-card border border-border rounded-xl overflow-hidden shadow-soft">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-left">
+                    <tr><th className="p-3">Boutique</th><th className="p-3">Ville</th><th className="p-3 text-right">Produits</th><th className="p-3 text-right">Alertes</th><th className="p-3 text-right">CA jour</th><th className="p-3 text-right">CA mois</th><th className="p-3"></th></tr>
+                  </thead>
+                  <tbody>
+                    {!franchiseKpis?.length && <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Aucune franchise</td></tr>}
+                    {franchiseKpis?.map((f: any) => (
+                      <tr key={f.franchise_id} className={`border-t border-border hover:bg-muted/20 ${selectedFranchise === f.franchise_id ? "bg-primary/5" : ""}`}>
+                        <td className="p-3 font-medium">{f.shop_name}</td>
+                        <td className="p-3">{f.city}</td>
+                        <td className="p-3 text-right">{f.items_count}</td>
+                        <td className="p-3 text-right">{Number(f.low_stock_count) > 0 ? <Badge variant="destructive">{f.low_stock_count}</Badge> : "—"}</td>
+                        <td className="p-3 text-right">{Number(f.revenue_today).toLocaleString("fr-FR")}</td>
+                        <td className="p-3 text-right font-bold text-primary">{Number(f.revenue_month).toLocaleString("fr-FR")}</td>
+                        <td className="p-3 text-right"><Button size="sm" variant="outline" onClick={() => setSelectedFranchise(f.franchise_id === selectedFranchise ? "" : f.franchise_id)}>{selectedFranchise === f.franchise_id ? "Fermer" : "Détails"}</Button></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Détails franchise sélectionnée */}
+            {selectedFranchise && (
+              <div className="grid lg:grid-cols-2 gap-4">
+                <div className="bg-card border border-border rounded-xl p-4 shadow-soft">
+                  <h3 className="font-bold mb-2 flex items-center gap-2"><Banknote className="size-4" /> 100 dernières ventes</h3>
+                  <div className="max-h-96 overflow-y-auto space-y-1 text-sm">
+                    {!franchiseSales?.length && <p className="text-muted-foreground text-center py-4">Aucune vente</p>}
+                    {franchiseSales?.map((s: any) => (
+                      <div key={s.id} className="flex justify-between border-b border-border py-1">
+                        <span className="font-mono text-xs">{s.receipt_code}</span>
+                        <span>{new Date(s.created_at).toLocaleDateString("fr-FR")}</span>
+                        <span className="font-bold">{Number(s.total_amount).toLocaleString("fr-FR")} F</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-card border border-border rounded-xl p-4 shadow-soft">
+                  <h3 className="font-bold mb-2 flex items-center gap-2"><Store className="size-4" /> Stock</h3>
+                  <div className="max-h-96 overflow-y-auto space-y-1 text-sm">
+                    {!franchiseStock?.length && <p className="text-muted-foreground text-center py-4">Aucun produit</p>}
+                    {franchiseStock?.map((it: any) => {
+                      const low = Number(it.stock_qty) <= Number(it.low_stock_threshold);
+                      return (
+                        <div key={it.id} className="flex justify-between border-b border-border py-1">
+                          <span className="truncate flex-1">{it.name}</span>
+                          <span className={low ? "text-destructive font-bold" : ""}>{it.stock_qty} {it.unit}</span>
+                          <span className="text-muted-foreground ml-3">{Number(it.sell_price).toLocaleString("fr-FR")} F</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </main>
 
