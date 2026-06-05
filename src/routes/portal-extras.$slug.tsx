@@ -65,6 +65,26 @@ function AdminExtras() {
     queryFn: async () => (await supabase.from("profiles").select("id, full_name, phone").order("created_at", { ascending: false }).limit(200)).data ?? [],
   });
 
+  const { data: franchiseKpis } = useQuery<any[]>({
+    queryKey: ["admin-franchise-kpis"],
+    enabled: !!isAdmin && slugOk,
+    queryFn: async () => (await sb.from("v_franchise_stock_kpis").select("*").order("revenue_month", { ascending: false })).data ?? [],
+  });
+
+  const [selectedFranchise, setSelectedFranchise] = useState<string>("");
+
+  const { data: franchiseSales } = useQuery<any[]>({
+    queryKey: ["admin-franchise-sales", selectedFranchise],
+    enabled: !!isAdmin && slugOk && !!selectedFranchise,
+    queryFn: async () => (await sb.from("graine_sales").select("id, receipt_code, total_amount, payment_method, created_at").eq("franchise_id", selectedFranchise).order("created_at", { ascending: false }).limit(100)).data ?? [],
+  });
+
+  const { data: franchiseStock } = useQuery<any[]>({
+    queryKey: ["admin-franchise-stock", selectedFranchise],
+    enabled: !!isAdmin && slugOk && !!selectedFranchise,
+    queryFn: async () => (await sb.from("graine_stock_items").select("id, name, stock_qty, low_stock_threshold, sell_price, unit").eq("franchise_id", selectedFranchise).order("name")).data ?? [],
+  });
+
   const [reviewing, setReviewing] = useState<any | null>(null);
   const [reviewNote, setReviewNote] = useState("");
   const [createDriverOpen, setCreateDriverOpen] = useState(false);
