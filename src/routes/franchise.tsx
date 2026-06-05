@@ -44,6 +44,12 @@ function FranchisePage() {
     queryFn: async () => (await supabase.from("graine_products").select("*").eq("is_active", true).order("created_at",{ascending:false})).data ?? [],
   });
 
+  const { data: myContract } = useQuery({
+    queryKey: ["my-franchise-contract", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("graine_franchise_contracts").select("id, shop_name, city").eq("user_id", user!.id).maybeSingle()).data,
+  });
+
   const toggle = (id: string) => setSelectedIds(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
