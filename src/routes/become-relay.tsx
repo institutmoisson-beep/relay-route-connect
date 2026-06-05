@@ -54,8 +54,8 @@ function BecomeRelay() {
     let id_photo_url = ""; let space_photo_url = "";
     try {
       [id_photo_url, space_photo_url] = await Promise.all([
-        safeUpload("relay-applications", `${user.id}/id`, idPhoto),
-        safeUpload("relay-applications", `${user.id}/space`, spacePhoto),
+        safeUpload("relay-applications", `${user.id}/id`, idPhoto, { compress: false }),
+        safeUpload("relay-applications", `${user.id}/space`, spacePhoto, { compress: false }),
       ]);
     } catch (e: any) {
       toast.error("Erreur d'upload: " + (e?.message || e)); setSubmitting(false); return;
