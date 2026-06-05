@@ -132,10 +132,10 @@ function BecomeDriverPage() {
 
             <h2 className="font-bold text-lg pt-2">Documents (images)</h2>
             <div className="grid sm:grid-cols-2 gap-4">
-              <FileField name="vehicle_photo" label="Photo du véhicule" />
-              <FileField name="license" label="Permis de conduire" />
-              <FileField name="id_recto" label="Pièce d'identité — recto" />
-              <FileField name="id_verso" label="Pièce d'identité — verso" />
+              <FileField name="vehicle_photo" label="Photo du véhicule" value={files.vehicle_photo} onChange={(f) => setFiles(s => ({ ...s, vehicle_photo: f }))} />
+              <FileField name="license" label="Permis de conduire" value={files.license} onChange={(f) => setFiles(s => ({ ...s, license: f }))} />
+              <FileField name="id_recto" label="Pièce d'identité — recto" value={files.id_recto} onChange={(f) => setFiles(s => ({ ...s, id_recto: f }))} />
+              <FileField name="id_verso" label="Pièce d'identité — verso" value={files.id_verso} onChange={(f) => setFiles(s => ({ ...s, id_verso: f }))} />
             </div>
 
             <Button disabled={submitting} type="submit" className="w-full h-12 bg-gradient-primary shadow-glow">
