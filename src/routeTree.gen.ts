@@ -28,6 +28,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PortalSlugRouteImport } from './routes/portal.$slug'
 import { Route as PortalExtrasSlugRouteImport } from './routes/portal-extras.$slug'
 import { Route as FranchiseStockRouteImport } from './routes/franchise.stock'
+import { Route as FranchiseSalesRouteImport } from './routes/franchise.sales'
+import { Route as FranchisePosRouteImport } from './routes/franchise.pos'
 
 const VtcHistoryRoute = VtcHistoryRouteImport.update({
   id: '/vtc-history',
@@ -124,6 +126,16 @@ const FranchiseStockRoute = FranchiseStockRouteImport.update({
   path: '/stock',
   getParentRoute: () => FranchiseRoute,
 } as any)
+const FranchiseSalesRoute = FranchiseSalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
+  getParentRoute: () => FranchiseRoute,
+} as any)
+const FranchisePosRoute = FranchisePosRouteImport.update({
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => FranchiseRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -142,6 +154,8 @@ export interface FileRoutesByFullPath {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/franchise/pos': typeof FranchisePosRoute
+  '/franchise/sales': typeof FranchiseSalesRoute
   '/franchise/stock': typeof FranchiseStockRoute
   '/portal-extras/$slug': typeof PortalExtrasSlugRoute
   '/portal/$slug': typeof PortalSlugRoute
@@ -163,6 +177,8 @@ export interface FileRoutesByTo {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/franchise/pos': typeof FranchisePosRoute
+  '/franchise/sales': typeof FranchiseSalesRoute
   '/franchise/stock': typeof FranchiseStockRoute
   '/portal-extras/$slug': typeof PortalExtrasSlugRoute
   '/portal/$slug': typeof PortalSlugRoute
@@ -185,6 +201,8 @@ export interface FileRoutesById {
   '/vtc': typeof VtcRoute
   '/vtc-driver': typeof VtcDriverRoute
   '/vtc-history': typeof VtcHistoryRoute
+  '/franchise/pos': typeof FranchisePosRoute
+  '/franchise/sales': typeof FranchiseSalesRoute
   '/franchise/stock': typeof FranchiseStockRoute
   '/portal-extras/$slug': typeof PortalExtrasSlugRoute
   '/portal/$slug': typeof PortalSlugRoute
@@ -208,6 +226,8 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/franchise/pos'
+    | '/franchise/sales'
     | '/franchise/stock'
     | '/portal-extras/$slug'
     | '/portal/$slug'
@@ -229,6 +249,8 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/franchise/pos'
+    | '/franchise/sales'
     | '/franchise/stock'
     | '/portal-extras/$slug'
     | '/portal/$slug'
@@ -250,6 +272,8 @@ export interface FileRouteTypes {
     | '/vtc'
     | '/vtc-driver'
     | '/vtc-history'
+    | '/franchise/pos'
+    | '/franchise/sales'
     | '/franchise/stock'
     | '/portal-extras/$slug'
     | '/portal/$slug'
@@ -411,14 +435,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FranchiseStockRouteImport
       parentRoute: typeof FranchiseRoute
     }
+    '/franchise/sales': {
+      id: '/franchise/sales'
+      path: '/sales'
+      fullPath: '/franchise/sales'
+      preLoaderRoute: typeof FranchiseSalesRouteImport
+      parentRoute: typeof FranchiseRoute
+    }
+    '/franchise/pos': {
+      id: '/franchise/pos'
+      path: '/pos'
+      fullPath: '/franchise/pos'
+      preLoaderRoute: typeof FranchisePosRouteImport
+      parentRoute: typeof FranchiseRoute
+    }
   }
 }
 
 interface FranchiseRouteChildren {
+  FranchisePosRoute: typeof FranchisePosRoute
+  FranchiseSalesRoute: typeof FranchiseSalesRoute
   FranchiseStockRoute: typeof FranchiseStockRoute
 }
 
 const FranchiseRouteChildren: FranchiseRouteChildren = {
+  FranchisePosRoute: FranchisePosRoute,
+  FranchiseSalesRoute: FranchiseSalesRoute,
   FranchiseStockRoute: FranchiseStockRoute,
 }
 
@@ -449,3 +491,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
