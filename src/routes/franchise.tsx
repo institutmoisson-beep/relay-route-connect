@@ -96,6 +96,21 @@ function FranchisePage() {
     <div className="min-h-screen bg-background">
       <SiteHeader />
 
+      {myContract && (
+        <div className="bg-primary/10 border-b border-primary/30">
+          <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm">
+              <span className="font-semibold">{myContract.shop_name}</span> · {myContract.city} — Espace franchisé
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button asChild size="sm" variant="outline"><Link to="/franchise/stock">Stock</Link></Button>
+              <Button asChild size="sm" variant="outline"><Link to="/franchise/pos">Caisse</Link></Button>
+              <Button asChild size="sm" className="bg-gradient-primary"><Link to="/franchise/sales">Ventes</Link></Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* HERO */}
       <section className="relative overflow-hidden bg-hero text-white py-20">
         <div className="glow-orb size-[500px] -top-20 -right-10" />
