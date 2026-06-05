@@ -38,9 +38,9 @@ function BecomeDriverPage() {
     const fd = new FormData(e.currentTarget);
     try {
       const upload = async (key: string): Promise<string | null> => {
-        const f = fd.get(key) as File | null;
+        const f = files[key];
         if (!f || !f.size) return null;
-        return await safeUpload("vtc-applications", user.id, f);
+        return await safeUpload("vtc-applications", user.id, f, { compress: false });
       };
       const [vehicle_photo_url, id_recto_url, id_verso_url, license_url] = await Promise.all([
         upload("vehicle_photo"), upload("id_recto"), upload("id_verso"), upload("license"),
