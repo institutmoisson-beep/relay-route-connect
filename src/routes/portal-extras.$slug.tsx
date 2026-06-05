@@ -151,6 +151,7 @@ function AdminExtras() {
           <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="drivers">Candidatures conducteur</TabsTrigger>
             <TabsTrigger value="withdrawals">Retraits</TabsTrigger>
+            <TabsTrigger value="franchises">Franchises (stock & ventes)</TabsTrigger>
           </TabsList>
 
           <TabsContent value="drivers" className="space-y-3">
