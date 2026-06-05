@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { safeUpload } from "@/lib/storage-upload";
+import { materializeFile } from "@/lib/image-compress";
 
 const sb = supabase as any;
 
