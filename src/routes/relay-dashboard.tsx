@@ -68,13 +68,13 @@ function RelayDashboard() {
       if (!["pending","picked_up"].includes(d.status)) { toast.error("Ce colis n'est pas en attente de réception"); return; }
       const { error } = await supabase.from("msn_deliveries").update({ status: "at_relay", at_relay_at: new Date().toISOString() }).eq("id", d.id);
       if (error) { toast.error(error.message); return; }
-      await supabase.from("msn_delivery_scans").insert({ delivery_id: d.id, scanned_by: user!.id, scan_type: "at_relay", note: "Scan réception" });
+      await supabase.from("msn_delivery_scans").insert({ delivery_id: d.id, scanned_by: user!.id, scanner_role: "relay_owner", action: "at_relay", note: "Scan réception" });
       toast.success(`Colis ${d.tracking_code} reçu au relais`);
     } else {
       if (d.status !== "at_relay") { toast.error("Ce colis n'est pas prêt à être remis"); return; }
       const { error } = await supabase.from("msn_deliveries").update({ status: "delivered", delivered_at: new Date().toISOString() }).eq("id", d.id);
       if (error) { toast.error(error.message); return; }
-      await supabase.from("msn_delivery_scans").insert({ delivery_id: d.id, scanned_by: user!.id, scan_type: "delivered", note: "Remise au client" });
+      await supabase.from("msn_delivery_scans").insert({ delivery_id: d.id, scanned_by: user!.id, scanner_role: "relay_owner", action: "delivered", note: "Remise au client" });
       toast.success(`Colis ${d.tracking_code} remis au client`);
     }
     refetch();
