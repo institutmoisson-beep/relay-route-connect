@@ -50,6 +50,27 @@ function FranchisePage() {
     queryFn: async () => (await supabase.from("graine_franchise_contracts").select("id, shop_name, city").eq("user_id", user!.id).maybeSingle()).data,
   });
 
+  const { data: kpis } = useQuery({
+    queryKey: ["franchise-kpis", myContract?.id],
+    enabled: !!myContract?.id,
+    queryFn: async () => {
+      const fid = myContract!.id;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const [salesToday, salesMonth, items, alerts] = await Promise.all([
+        supabase.from("graine_sales").select("total_amount").eq("franchise_id", fid).gte("created_at", today.toISOString()),
+        supabase.from("graine_sales").select("total_amount").eq("franchise_id", fid).gte("created_at", new Date(today.getFullYear(), today.getMonth(), 1).toISOString()),
+        supabase.from("graine_stock_items").select("id, stock_qty, low_stock_threshold").eq("franchise_id", fid),
+        supabase.from("graine_stock_items").select("id").eq("franchise_id", fid).lte("stock_qty", 5),
+      ]);
+      return {
+        today: (salesToday.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount || 0), 0),
+        month: (salesMonth.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount || 0), 0),
+        products: items.data?.length ?? 0,
+        alerts: alerts.data?.length ?? 0,
+      };
+    },
+  });
+
   const toggle = (id: string) => setSelectedIds(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
