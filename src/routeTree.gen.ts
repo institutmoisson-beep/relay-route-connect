@@ -15,6 +15,7 @@ import { Route as VtcRouteImport } from './routes/vtc'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RelayPointsRouteImport } from './routes/relay-points'
+import { Route as RelayDashboardRouteImport } from './routes/relay-dashboard'
 import { Route as RechargeRouteImport } from './routes/recharge'
 import { Route as OrderRouteImport } from './routes/order'
 import { Route as InboxRouteImport } from './routes/inbox'
@@ -59,6 +60,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const RelayPointsRoute = RelayPointsRouteImport.update({
   id: '/relay-points',
   path: '/relay-points',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RelayDashboardRoute = RelayDashboardRouteImport.update({
+  id: '/relay-dashboard',
+  path: '/relay-dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RechargeRoute = RechargeRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
+  '/relay-dashboard': typeof RelayDashboardRoute
   '/relay-points': typeof RelayPointsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
@@ -171,6 +178,7 @@ export interface FileRoutesByTo {
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
+  '/relay-dashboard': typeof RelayDashboardRoute
   '/relay-points': typeof RelayPointsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/inbox': typeof InboxRoute
   '/order': typeof OrderRoute
   '/recharge': typeof RechargeRoute
+  '/relay-dashboard': typeof RelayDashboardRoute
   '/relay-points': typeof RelayPointsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/verify': typeof VerifyRoute
@@ -220,6 +229,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/order'
     | '/recharge'
+    | '/relay-dashboard'
     | '/relay-points'
     | '/sitemap.xml'
     | '/verify'
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/order'
     | '/recharge'
+    | '/relay-dashboard'
     | '/relay-points'
     | '/sitemap.xml'
     | '/verify'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/order'
     | '/recharge'
+    | '/relay-dashboard'
     | '/relay-points'
     | '/sitemap.xml'
     | '/verify'
@@ -290,6 +302,7 @@ export interface RootRouteChildren {
   InboxRoute: typeof InboxRoute
   OrderRoute: typeof OrderRoute
   RechargeRoute: typeof RechargeRoute
+  RelayDashboardRoute: typeof RelayDashboardRoute
   RelayPointsRoute: typeof RelayPointsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   VerifyRoute: typeof VerifyRoute
@@ -342,6 +355,13 @@ declare module '@tanstack/react-router' {
       path: '/relay-points'
       fullPath: '/relay-points'
       preLoaderRoute: typeof RelayPointsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/relay-dashboard': {
+      id: '/relay-dashboard'
+      path: '/relay-dashboard'
+      fullPath: '/relay-dashboard'
+      preLoaderRoute: typeof RelayDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recharge': {
@@ -479,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   InboxRoute: InboxRoute,
   OrderRoute: OrderRoute,
   RechargeRoute: RechargeRoute,
+  RelayDashboardRoute: RelayDashboardRoute,
   RelayPointsRoute: RelayPointsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   VerifyRoute: VerifyRoute,
