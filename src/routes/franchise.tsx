@@ -50,6 +50,27 @@ function FranchisePage() {
     queryFn: async () => (await supabase.from("graine_franchise_contracts").select("id, shop_name, city").eq("user_id", user!.id).maybeSingle()).data,
   });
 
+  const { data: kpis } = useQuery({
+    queryKey: ["franchise-kpis", myContract?.id],
+    enabled: !!myContract?.id,
+    queryFn: async () => {
+      const fid = myContract!.id;
+      const today = new Date(); today.setHours(0,0,0,0);
+      const [salesToday, salesMonth, items, alerts] = await Promise.all([
+        supabase.from("graine_sales").select("total_amount").eq("franchise_id", fid).gte("created_at", today.toISOString()),
+        supabase.from("graine_sales").select("total_amount").eq("franchise_id", fid).gte("created_at", new Date(today.getFullYear(), today.getMonth(), 1).toISOString()),
+        supabase.from("graine_stock_items").select("id, stock_qty, low_stock_threshold").eq("franchise_id", fid),
+        supabase.from("graine_stock_items").select("id").eq("franchise_id", fid).lte("stock_qty", 5),
+      ]);
+      return {
+        today: (salesToday.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount || 0), 0),
+        month: (salesMonth.data ?? []).reduce((s: number, r: any) => s + Number(r.total_amount || 0), 0),
+        products: items.data?.length ?? 0,
+        alerts: alerts.data?.length ?? 0,
+      };
+    },
+  });
+
   const toggle = (id: string) => setSelectedIds(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -97,19 +118,28 @@ function FranchisePage() {
       <SiteHeader />
 
       {myContract && (
-        <div className="bg-primary/10 border-b border-primary/30">
-          <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm">
-              <span className="font-semibold">{myContract.shop_name}</span> · {myContract.city} — Espace franchisé
+        <div className="bg-gradient-to-br from-primary/10 via-background to-bronze/10 border-b border-primary/30">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="text-sm">
+                <span className="font-display font-bold text-lg">{myContract.shop_name}</span> · {myContract.city} — <span className="text-primary font-semibold">Espace franchisé</span>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button asChild size="sm" variant="outline"><Link to="/franchise/stock">Stock</Link></Button>
+                <Button asChild size="sm" className="bg-gradient-primary"><Link to="/franchise/pos">Caisse</Link></Button>
+                <Button asChild size="sm" variant="outline"><Link to="/franchise/sales">Ventes</Link></Button>
+              </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button asChild size="sm" variant="outline"><Link to="/franchise/stock">Stock</Link></Button>
-              <Button asChild size="sm" variant="outline"><Link to="/franchise/pos">Caisse</Link></Button>
-              <Button asChild size="sm" className="bg-gradient-primary"><Link to="/franchise/sales">Ventes</Link></Button>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <KpiMini label="CA aujourd'hui" value={`${Math.round(kpis?.today ?? 0).toLocaleString("fr-FR")} F`} />
+              <KpiMini label="CA ce mois" value={`${Math.round(kpis?.month ?? 0).toLocaleString("fr-FR")} F`} />
+              <KpiMini label="Produits" value={kpis?.products ?? 0} />
+              <KpiMini label="Alertes stock" value={kpis?.alerts ?? 0} highlight={(kpis?.alerts ?? 0) > 0} />
             </div>
           </div>
         </div>
       )}
+
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-hero text-white py-20">
@@ -271,6 +301,15 @@ function FranchisePage() {
       </section>
 
       <SiteFooter />
+    </div>
+  );
+}
+
+function KpiMini({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl p-3 border ${highlight ? "bg-destructive/10 border-destructive/40" : "bg-card border-border"}`}>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-lg font-bold ${highlight ? "text-destructive" : ""}`}>{value}</div>
     </div>
   );
 }

@@ -1,12 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Package, Menu, X, Shield, Inbox, Sprout, ScanLine, Sparkles, Bike } from "lucide-react";
+import { Package, Menu, X, Shield, Inbox, Sprout, ScanLine, Sparkles, Bike, Store } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { ADMIN_SLUG } from "@/lib/admin-security";
 
 export function SiteHeader() {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isAdmin, roles } = useAuth();
+  const isRelayOwner = roles?.includes("relay_owner");
   const [open, setOpen] = useState(false);
 
   return (
@@ -30,6 +31,7 @@ export function SiteHeader() {
           <Link to="/vtc" className="hover:text-primary transition-colors flex items-center gap-1"><Sparkles className="size-4" />VTC</Link>
           {user && <Link to="/verify" className="hover:text-primary transition-colors flex items-center gap-1"><ScanLine className="size-4" />Vérifier</Link>}
           {user && <Link to="/dashboard" className="hover:text-primary transition-colors">Tableau de bord</Link>}
+          {isRelayOwner && <Link to="/relay-dashboard" className="hover:text-primary transition-colors flex items-center gap-1"><Store className="size-4" />Mon relais</Link>}
           {user && <Link to="/inbox" className="hover:text-primary transition-colors flex items-center gap-1"><Inbox className="size-4" />Canal</Link>}
         </nav>
 
@@ -70,6 +72,7 @@ export function SiteHeader() {
             {user ? (
               <>
                 <Link to="/dashboard" onClick={() => setOpen(false)} className="py-2">Tableau de bord</Link>
+                {isRelayOwner && <Link to="/relay-dashboard" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Store className="size-4" />Mon relais</Link>}
                 <Link to="/inbox" onClick={() => setOpen(false)} className="py-2 flex items-center gap-1"><Inbox className="size-4" />Boîte canal</Link>
                 {isAdmin && <Link to="/portal/$slug" params={{ slug: ADMIN_SLUG }} onClick={() => setOpen(false)} className="py-2 flex items-center gap-1 text-primary font-semibold"><Shield className="size-4" />Administration</Link>}
                 {isAdmin && <Link to="/portal-extras/$slug" params={{ slug: ADMIN_SLUG }} onClick={() => setOpen(false)} className="py-2 flex items-center gap-1 text-primary font-semibold"><Shield className="size-4" />Admin étendue</Link>}
