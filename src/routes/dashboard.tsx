@@ -187,6 +187,45 @@ function Dashboard() {
           <Kpi icon={CheckCircle2} label="Livrées" value={stats.delivered} />
         </div>
 
+        {(myRelays?.length || myFranchise) && (
+          <div className="mb-8">
+            <h2 className="text-lg font-display font-bold mb-3 flex items-center gap-2"><Store className="size-5 text-primary" /> Mes espaces partenaires</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {myRelays?.length ? (
+                <Link to="/relay-dashboard" className="group rounded-2xl p-5 bg-gradient-primary text-primary-foreground shadow-elegant hover:shadow-glow transition">
+                  <div className="flex items-center justify-between mb-3"><MapPin className="size-6" /><Badge className="bg-white/20 text-white border-0">{myRelays.length} relais</Badge></div>
+                  <div className="font-display font-bold text-xl">Dashboard Point Relais</div>
+                  <p className="text-sm opacity-90 mt-1">Scanner colis · réception · remise · stats</p>
+                  <div className="mt-3 inline-flex items-center gap-1 text-sm font-semibold">Ouvrir <ArrowRight className="size-4 group-hover:translate-x-1 transition" /></div>
+                </Link>
+              ) : null}
+              {myFranchise && (
+                <>
+                  <Link to="/franchise/stock" className="group rounded-2xl p-5 bg-gradient-bronze text-bronze-foreground shadow-elegant hover:shadow-glow transition">
+                    <div className="flex items-center justify-between mb-3"><Boxes className="size-6" /><Badge className="bg-white/20 text-bronze-foreground border-0">{myFranchise.shop_name}</Badge></div>
+                    <div className="font-display font-bold text-xl">Gestion de stock</div>
+                    <p className="text-sm opacity-90 mt-1">Produits · code-barres · alertes stock bas</p>
+                    <div className="mt-3 inline-flex items-center gap-1 text-sm font-semibold">Ouvrir <ArrowRight className="size-4 group-hover:translate-x-1 transition" /></div>
+                  </Link>
+                  <Link to="/franchise/pos" className="group rounded-2xl p-5 bg-card border-2 border-primary/40 shadow-soft hover:border-primary hover:shadow-glow transition">
+                    <div className="flex items-center justify-between mb-3"><ShoppingCart className="size-6 text-primary" /><Badge className="bg-primary text-primary-foreground border-0"><ScanLine className="size-3 mr-1" />Scanner</Badge></div>
+                    <div className="font-display font-bold text-xl">Caisse (POS)</div>
+                    <p className="text-sm text-muted-foreground mt-1">Scan caméra/douchette · panier · paiement</p>
+                    <div className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">Ouvrir <ArrowRight className="size-4 group-hover:translate-x-1 transition" /></div>
+                  </Link>
+                  <Link to="/franchise/sales" className="group rounded-2xl p-5 bg-card border border-border shadow-soft hover:border-primary/50 transition">
+                    <div className="flex items-center justify-between mb-3"><BarChart3 className="size-6 text-primary" /></div>
+                    <div className="font-display font-bold text-xl">Ventes & historique</div>
+                    <p className="text-sm text-muted-foreground mt-1">Journal · export CSV · recettes</p>
+                    <div className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary">Ouvrir <ArrowRight className="size-4" /></div>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+
         <div className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden">
           <div className="flex border-b border-border overflow-x-auto">
             <TabBtn active={tab==="deliveries"} onClick={() => setTab("deliveries")}>Mes livraisons</TabBtn>
