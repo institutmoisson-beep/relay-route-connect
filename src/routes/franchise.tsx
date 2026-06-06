@@ -304,3 +304,12 @@ function FranchisePage() {
     </div>
   );
 }
+
+function KpiMini({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
+  return (
+    <div className={`rounded-xl p-3 border ${highlight ? "bg-destructive/10 border-destructive/40" : "bg-card border-border"}`}>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className={`text-lg font-bold ${highlight ? "text-destructive" : ""}`}>{value}</div>
+    </div>
+  );
+}
