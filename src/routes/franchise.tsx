@@ -118,19 +118,28 @@ function FranchisePage() {
       <SiteHeader />
 
       {myContract && (
-        <div className="bg-primary/10 border-b border-primary/30">
-          <div className="container mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm">
-              <span className="font-semibold">{myContract.shop_name}</span> · {myContract.city} — Espace franchisé
+        <div className="bg-gradient-to-br from-primary/10 via-background to-bronze/10 border-b border-primary/30">
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div className="text-sm">
+                <span className="font-display font-bold text-lg">{myContract.shop_name}</span> · {myContract.city} — <span className="text-primary font-semibold">Espace franchisé</span>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button asChild size="sm" variant="outline"><Link to="/franchise/stock">Stock</Link></Button>
+                <Button asChild size="sm" className="bg-gradient-primary"><Link to="/franchise/pos">Caisse</Link></Button>
+                <Button asChild size="sm" variant="outline"><Link to="/franchise/sales">Ventes</Link></Button>
+              </div>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button asChild size="sm" variant="outline"><Link to="/franchise/stock">Stock</Link></Button>
-              <Button asChild size="sm" variant="outline"><Link to="/franchise/pos">Caisse</Link></Button>
-              <Button asChild size="sm" className="bg-gradient-primary"><Link to="/franchise/sales">Ventes</Link></Button>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <KpiMini label="CA aujourd'hui" value={`${Math.round(kpis?.today ?? 0).toLocaleString("fr-FR")} F`} />
+              <KpiMini label="CA ce mois" value={`${Math.round(kpis?.month ?? 0).toLocaleString("fr-FR")} F`} />
+              <KpiMini label="Produits" value={kpis?.products ?? 0} />
+              <KpiMini label="Alertes stock" value={kpis?.alerts ?? 0} highlight={(kpis?.alerts ?? 0) > 0} />
             </div>
           </div>
         </div>
       )}
+
 
       {/* HERO */}
       <section className="relative overflow-hidden bg-hero text-white py-20">
