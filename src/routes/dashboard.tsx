@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine, Star, Sprout, History } from "lucide-react";
+import { Wallet, Package, MapPin, CheckCircle2, Clock, Truck, Plus, ArrowRight, Store, Shield, Inbox, FileText, Download, PenLine, Star, Sprout, History, ScanLine, Boxes, ShoppingCart, BarChart3 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -70,6 +70,16 @@ function Dashboard() {
     queryKey: ["my-reviews", user?.id],
     enabled: !!user,
     queryFn: async () => (await supabase.from("msn_relay_reviews").select("delivery_id").eq("user_id", user!.id)).data ?? [],
+  });
+  const { data: myRelays } = useQuery({
+    queryKey: ["my-relays-dash", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("msn_relay_points").select("id, name, city").eq("owner_id", user!.id)).data ?? [],
+  });
+  const { data: myFranchise } = useQuery({
+    queryKey: ["my-franchise-dash", user?.id],
+    enabled: !!user,
+    queryFn: async () => (await supabase.from("graine_franchise_contracts").select("id, shop_name, city").eq("user_id", user!.id).maybeSingle()).data,
   });
   const reviewedIds = new Set((myReviews ?? []).map((r: any) => r.delivery_id));
 
